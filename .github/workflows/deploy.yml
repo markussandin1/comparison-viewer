@@ -59,17 +59,17 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           docker build --build-arg VITE_API_URL=${{ steps.backend-url.outputs.url }} \
-            -t gcr.io/${{ env.PROJECT_ID }}/correction-viewer-frontend .
+            -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/correction-viewer-frontend .
 
-      - name: Push to GCR
+      - name: Push to Artifact Registry
         run: |
-          gcloud auth configure-docker
-          docker push gcr.io/${{ env.PROJECT_ID }}/correction-viewer-frontend
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/correction-viewer-frontend
 
       - name: Deploy Frontend to Cloud Run
         run: |
           gcloud run deploy correction-viewer-frontend \
-            --image gcr.io/${{ env.PROJECT_ID }}/correction-viewer-frontend \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/correction-viewer-frontend \
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
