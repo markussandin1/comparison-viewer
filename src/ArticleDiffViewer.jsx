@@ -487,8 +487,16 @@ export default function ArticleDiffViewer() {
 
                     <SplitScreenField
                       label="Body"
-                      original={currentCorrection.original_article.body?.join('\n\n') || ''}
-                      corrected={currentCorrection.corrected_article.body?.join('\n\n') || ''}
+                      original={
+                        Array.isArray(currentCorrection.original_article.body)
+                          ? currentCorrection.original_article.body.join('\n\n')
+                          : (currentCorrection.original_article.body || '')
+                      }
+                      corrected={
+                        Array.isArray(currentCorrection.corrected_article.body)
+                          ? currentCorrection.corrected_article.body.join('\n\n')
+                          : (currentCorrection.corrected_article.body || '')
+                      }
                       patches={currentCorrection.applied?.filter(p => p.path.startsWith('body')) || []}
                     />
                   </>
