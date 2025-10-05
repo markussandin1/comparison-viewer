@@ -94,23 +94,43 @@ function buildPath(a, b, trace, d) {
   return operations;
 }
 
-// Diff visualization component
-function DiffDisplay({ operations }) {
+// Display only deletions (for original text)
+function DiffDisplayOriginal({ operations }) {
   return (
-    <div className="text-sm leading-relaxed">
+    <div className="text-sm leading-relaxed whitespace-pre-wrap">
       {operations.map((op, index) => {
         switch (op.type) {
           case 'equal':
             return <span key={index}>{op.text}</span>;
           case 'delete':
             return (
-              <span key={index} className="bg-red-100 text-red-800 line-through px-1 rounded">
+              <span key={index} className="bg-red-100 text-red-800 line-through">
                 {op.text}
               </span>
             );
           case 'insert':
+            return null; // Don't show insertions in original
+          default:
+            return null;
+        }
+      })}
+    </div>
+  );
+}
+
+// Display only insertions (for corrected text)
+function DiffDisplayCorrected({ operations }) {
+  return (
+    <div className="text-sm leading-relaxed whitespace-pre-wrap">
+      {operations.map((op, index) => {
+        switch (op.type) {
+          case 'equal':
+            return <span key={index}>{op.text}</span>;
+          case 'delete':
+            return null; // Don't show deletions in corrected
+          case 'insert':
             return (
-              <span key={index} className="bg-green-100 text-green-800 px-1 rounded">
+              <span key={index} className="bg-green-100 text-green-800">
                 {op.text}
               </span>
             );
@@ -122,27 +142,17 @@ function DiffDisplay({ operations }) {
   );
 }
 
-// Patch-aware diff that guarantees all applied changes are shown
+// Improved patch-aware diff that shows minimal changes
 function computePatchAwareDiff(original, corrected, patches) {
-  const tokenize = (text) => {
-    if (!text) return [];
-    return text.split(/(\s+|[.,!?;:"()–—\-\[\]{}])/).filter(token => token.length > 0);
-  };
+  if (!original && !corrected) return [];
 
-  if (!patches || patches.length === 0) {
-    return computeWordDiff(original, corrected);
+  // If texts are identical, return all equal
+  if (original === corrected) {
+    return original.split(/(\s+)/).filter(t => t.length > 0).map(text => ({ type: 'equal', text }));
   }
 
-  const changes = new Map();
-  patches.forEach(patch => {
-    const before = patch.before.trim();
-    const after = patch.after.trim();
-    if (before !== after) {
-      changes.set(before, after);
-    }
-  });
-
-  return enhanceWithPatches(original, corrected, changes);
+  // Use the standard word diff which is more accurate
+  return computeWordDiff(original, corrected);
 }
 
 function enhanceWithPatches(original, corrected, changes) {
@@ -254,18 +264,14 @@ function SplitScreenField({ label, original, corrected, patches = [] }) {
     <div className="border-b border-gray-200 pb-4">
       <h3 className="font-semibold text-gray-700 mb-3 text-sm">{label}</h3>
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-red-50 p-3 rounded border border-red-100">
-          <div className="text-xs font-medium text-red-700 mb-2">Original</div>
-          <div className="text-sm text-gray-800">{original}</div>
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <div className="text-xs font-medium text-gray-600 mb-2">Original</div>
+          <DiffDisplayOriginal operations={operations} />
         </div>
-        <div className="bg-green-50 p-3 rounded border border-green-100">
-          <div className="text-xs font-medium text-green-700 mb-2">Korrigerad</div>
-          <div className="text-sm text-gray-800">{corrected}</div>
+        <div className="bg-white p-4 rounded border border-gray-200">
+          <div className="text-xs font-medium text-gray-600 mb-2">Korrigerad</div>
+          <DiffDisplayCorrected operations={operations} />
         </div>
-      </div>
-      <div className="mt-2 p-3 bg-gray-50 rounded">
-        <div className="text-xs font-medium text-gray-600 mb-2">Diff</div>
-        <DiffDisplay operations={operations} />
       </div>
     </div>
   );
@@ -479,21 +485,12 @@ export default function ArticleDiffViewer() {
                       patches={currentCorrection.applied?.filter(p => p.path === 'lead') || []}
                     />
 
-                    {currentCorrection.original_article.body?.map((paragraph, index) => {
-                      const bodyPatches = currentCorrection.applied?.filter(
-                        p => p.path === `body[${index}]`
-                      ) || [];
-
-                      return (
-                        <SplitScreenField
-                          key={index}
-                          label={`Body stycke ${index + 1}`}
-                          original={paragraph}
-                          corrected={currentCorrection.corrected_article.body?.[index]}
-                          patches={bodyPatches}
-                        />
-                      );
-                    })}
+                    <SplitScreenField
+                      label="Body"
+                      original={currentCorrection.original_article.body?.join('\n\n') || ''}
+                      corrected={currentCorrection.corrected_article.body?.join('\n\n') || ''}
+                      patches={currentCorrection.applied?.filter(p => p.path.startsWith('body')) || []}
+                    />
                   </>
                 )}
 

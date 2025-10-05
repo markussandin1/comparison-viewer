@@ -1,88 +1,149 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const initSqlJs = require('sql.js');
 const fs = require('fs');
+const path = require('path');
 
 // Use /app/data for persistent storage in Docker, otherwise use local directory
 const dbDir = process.env.NODE_ENV === 'production' ? '/app/data' : __dirname;
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+const dbPath = path.join(dbDir, 'corrections.db');
+
+let db;
+
+// Initialize database
+async function initDatabase() {
+  const SQL = await initSqlJs();
+
+  // Load existing database or create new one
+  if (fs.existsSync(dbPath)) {
+    const fileBuffer = fs.readFileSync(dbPath);
+    db = new SQL.Database(fileBuffer);
+  } else {
+    db = new SQL.Database();
+  }
+
+  // Create tables
+  db.run(`
+    CREATE TABLE IF NOT EXISTS corrections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      article_id TEXT,
+      original_article TEXT NOT NULL,
+      corrected_article TEXT NOT NULL,
+      applied TEXT,
+      unapplied TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Save to disk
+  saveDatabase();
 }
 
-// Initialize SQLite database
-const db = new Database(path.join(dbDir, 'corrections.db'));
-
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS corrections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    article_id TEXT,
-    original_article TEXT NOT NULL,
-    corrected_article TEXT NOT NULL,
-    applied TEXT,
-    unapplied TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-
-// Prepared statements
-const insertCorrection = db.prepare(`
-  INSERT INTO corrections (article_id, original_article, corrected_article, applied, unapplied)
-  VALUES (?, ?, ?, ?, ?)
-`);
-
-const getAllCorrections = db.prepare(`
-  SELECT id, article_id, created_at
-  FROM corrections
-  ORDER BY created_at DESC
-`);
-
-const getCorrectionById = db.prepare(`
-  SELECT * FROM corrections WHERE id = ?
-`);
-
-const deleteCorrection = db.prepare(`
-  DELETE FROM corrections WHERE id = ?
-`);
+// Save database to disk
+function saveDatabase() {
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+  const data = db.export();
+  const buffer = Buffer.from(data);
+  fs.writeFileSync(dbPath, buffer);
+}
 
 // Database functions
 function saveCorrection(data) {
-  const result = insertCorrection.run(
-    data.article_id || null,
-    JSON.stringify(data.original_article || {}),
-    JSON.stringify(data.corrected_article || {}),
-    JSON.stringify(data.applied || []),
-    JSON.stringify(data.unapplied || [])
+  // Parse body if it's a string
+  let originalArticle = data.original_article || {};
+  let correctedArticle = data.corrected_article || {};
+
+  if (originalArticle.body && typeof originalArticle.body === 'string') {
+    try {
+      originalArticle.body = JSON.parse(originalArticle.body);
+    } catch (e) {
+      console.warn('Failed to parse original_article.body as JSON:', e);
+    }
+  }
+
+  if (correctedArticle.body && typeof correctedArticle.body === 'string') {
+    try {
+      correctedArticle.body = JSON.parse(correctedArticle.body);
+    } catch (e) {
+      console.warn('Failed to parse corrected_article.body as JSON:', e);
+    }
+  }
+
+  db.run(
+    `INSERT INTO corrections (article_id, original_article, corrected_article, applied, unapplied)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      Array.isArray(data.article_id) ? data.article_id[0] : (data.article_id || null),
+      JSON.stringify(originalArticle),
+      JSON.stringify(correctedArticle),
+      JSON.stringify(data.applied || []),
+      JSON.stringify(data.unapplied || [])
+    ]
   );
 
-  return result.lastInsertRowid;
+  saveDatabase();
+
+  // Get last inserted ID
+  const result = db.exec('SELECT MAX(id) as id FROM corrections');
+  return result[0].values[0][0];
 }
 
 function listCorrections() {
-  return getAllCorrections.all();
+  const result = db.exec(`
+    SELECT id, article_id, created_at
+    FROM corrections
+    ORDER BY created_at DESC
+  `);
+
+  if (!result.length || !result[0].values.length) {
+    return [];
+  }
+
+  return result[0].values.map(row => ({
+    id: row[0],
+    article_id: row[1],
+    created_at: row[2]
+  }));
 }
 
 function getCorrection(id) {
-  const row = getCorrectionById.get(id);
+  const result = db.exec(`
+    SELECT * FROM corrections WHERE id = ?
+  `, [id]);
 
-  if (!row) return null;
+  if (!result.length || !result[0].values.length) {
+    return null;
+  }
+
+  const row = result[0].values[0];
+  const columns = result[0].columns;
 
   return {
-    id: row.id,
-    article_id: row.article_id,
-    original_article: JSON.parse(row.original_article),
-    corrected_article: JSON.parse(row.corrected_article),
-    applied: JSON.parse(row.applied),
-    unapplied: JSON.parse(row.unapplied),
-    created_at: row.created_at
+    id: row[columns.indexOf('id')],
+    article_id: row[columns.indexOf('article_id')],
+    original_article: JSON.parse(row[columns.indexOf('original_article')]),
+    corrected_article: JSON.parse(row[columns.indexOf('corrected_article')]),
+    applied: JSON.parse(row[columns.indexOf('applied')]),
+    unapplied: JSON.parse(row[columns.indexOf('unapplied')]),
+    created_at: row[columns.indexOf('created_at')]
   };
 }
 
 function removeCorrection(id) {
-  const result = deleteCorrection.run(id);
-  return result.changes > 0;
+  const result = db.exec(`SELECT COUNT(*) FROM corrections WHERE id = ?`, [id]);
+  const exists = result[0].values[0][0] > 0;
+
+  if (!exists) {
+    return false;
+  }
+
+  db.run('DELETE FROM corrections WHERE id = ?', [id]);
+  saveDatabase();
+  return true;
 }
 
 module.exports = {
+  initDatabase,
   saveCorrection,
   listCorrections,
   getCorrection,

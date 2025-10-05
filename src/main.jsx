@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import ArticleDiffViewer from '../ArticleDiffViewer.jsx'
+import ArticleDiffViewer from './ArticleDiffViewer.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(

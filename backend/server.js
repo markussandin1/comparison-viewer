@@ -10,6 +10,17 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
+// Initialize database before starting server
+let serverReady = false;
+
+db.initDatabase().then(() => {
+  serverReady = true;
+  console.log('Database initialized');
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -17,6 +28,10 @@ app.get('/health', (req, res) => {
 
 // POST new correction
 app.post('/api/corrections', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
   try {
     const data = req.body;
 
@@ -46,6 +61,10 @@ app.post('/api/corrections', (req, res) => {
 
 // GET all corrections (list view)
 app.get('/api/corrections', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
   try {
     const corrections = db.listCorrections();
     res.json(corrections);
@@ -60,6 +79,10 @@ app.get('/api/corrections', (req, res) => {
 
 // GET single correction by ID
 app.get('/api/corrections/:id', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
   try {
     const id = parseInt(req.params.id, 10);
 

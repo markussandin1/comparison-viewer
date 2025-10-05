@@ -1,0 +1,72 @@
+{
+  "applied": [
+    {
+      "path": "title",
+      "after": "Colombias president kritiseras för sitt ställningstagande mot Israel – mister visum till USA",
+      "agent": "tt-spraket-agent",
+      "before": "Colombias president kritiseras för sina ställningstagande mot Israel – mister visum till USA"
+    },
+    {
+      "path": "lead",
+      "after": "militärstyrka",
+      "agent": "compound-swe@0.1",
+      "before": "militär styrka"
+    },
+    {
+      "path": "lead",
+      "after": "kritiseras även på hemmaplan för att använda sin Israelkritik för att försöka stärka sina chanser att bli omvald nästa år.",
+      "agent": "tt-spraket-agent",
+      "before": "kritiseras även på hemmaplan för att använda sin Israelkritik till att försöka stärka sina chanser att bli omvald nästa år."
+    },
+    {
+      "path": "body[2]",
+      "after": "militärinsats",
+      "agent": "compound-swe@0.1",
+      "before": "militär insats"
+    },
+    {
+      "path": "body[2]",
+      "after": "sydafrikas",
+      "agent": "upperLowerCaseAgent@0.1",
+      "before": "Sydafrikas"
+    },
+    {
+      "path": "body[5]",
+      "after": "I Colombia har Petro fått utstå mycket kritik för sitt ställningstagande mot det som han ser som Israels folkmord, även om han också fått mycket stöd.",
+      "agent": "tt-spraket-agent",
+      "before": "I Colombia har Petro fått utstå mycket kritik för sina ställningstagande mot det som han ser som Israels folkmord, även om han också fått mycket stöd."
+    },
+    {
+      "path": "body[5]",
+      "after": "ställningstaganden",
+      "agent": "spelling-swe",
+      "before": "ställningstagande"
+    }
+  ],
+  "article_id": [
+    ""
+  ],
+  "original_article": {
+    "body": "[\"På den internationella banan har Gustavo Petro länge varit en av de hårdaste kritikerna av Israels krigföring i Gaza. Han reagerade kraftigt på den dåvarande försvarsministern Yoav Galant, som kort efter 7 oktober 2023 försvarade invasionen med orden: ”vi kämpar mot människodjur och agerar därefter.”\",\"– Detta är vad nazisterna sade om judarna. Allt detta hat, om det fortsätter, kommer att leda till ett folkmord, sade Gustavo Petro för snart två år sedan.\",\"I maj förra året bröt Colombia de diplomatiska relationerna med Israel och stödde Sydafrikas rättsliga åtgärder mot Israels ledarskikt. Efter FN-mötet i New York i förra veckan ställde Petro sig på Dag Hammarskjöld Plaza utanför FN-högkvarteret och uppmanade till en global militär insats för att befria Palestina från israeliska trupper.\",\"– Den här internationella styrkan måste vara större än den som leds av USA. Därför vill jag här i New York be alla soldater i USA:s armé att inte rikta sina vapen mot mänskligheten, sade han på torget.\",\"Som straff för sina uttalanden drog de amerikanska myndigheterna in hans visum till USA.\",\"I Colombia har Petro fått utstå mycket kritik för sina ställningstagande mot det som han ser som Israels folkmord, även om han också fått mycket stöd. Till höger menar många att han använder sin Israelkritik för att stärka sin politiska ställning inför nästa års presidentval. 34 procent av väljarna tycker att Petros vänsterregering gör ett bra jobb för landet, men hela 62 procent motsätter sig hans ledarskap, enligt en färsk undersökning som Bloomberg News beställt.\",\"”Det är bättre att han avgår och ägnar sig på heltid åt att organisera den palestinska befrielsearmén som han föreslår”, skriver Andrés Forero, kongressledamot för högerpopulistiska Centro Democrático, på plattformen X. Han menar att Petro ”inte bryr sig om det våld som plågar Colombia, för han är fokuserad på tragedin i Gaza”.\",\"Även kongressledamoten Lina Garrido, som företräder högerpartiet Cambio Radical kritiserar Gustavo Petros engagemang för befolkningen i Gaza. Hon anser att presidenten inte arbetar för sitt eget land.\",\"”Du är pratig och lat. Om du verkligen vill vara en man, så led då militärstyrkan själv”, skrev hon på X – men tog senare bort inlägget.\",\"Hon får medhåll av senatorn och högerradikalen María Fernanda Cabal som väntas bli en av Gustavo Petros motkandidater under nästa års presidentval. Hon kritiserar Petro för att han startade sin politiska bana genom att under 1980-talet gå med i en marxistisk gerillagrupp som använde våld för att kämpa för social rättvisa i Latinamerikas tredje största land.\",\"”Hör du, Petro, vill du nu ta upp vapnen igen för att försvara Palestina, bara för att du inte kan styra Colombia?” frågar hon på X och fortsätter: ”Någon som du är ovärdig att leda det här landet. Vi förtjänar välstånd och utveckling, inte en cirkus med ny föreställning varje dag”.\",\"När Colombia bröt de diplomatiska relationerna med Israel förra året öppnade landet i stället en diplomatisk mission i Ramallah på Västbanken. Colombia har historiska band till Palestina på grund av att många colombianer härstammar från de palestinier, libaneser och syrier som flydde konflikterna under Osmanska riket i början av 1900-talet och sökte sig till Colombia. Landets mest kända artist, sångerskan Shakira, är av libanesiskt ursprung.\"]",
+    "lead": "RIO DE JANEIRO. Colombias vänsterpresident Gustavo Petro – som var gerillamedlem på 1980-talet – vill skicka en internationell militär styrka till Gaza för att ”befria palestinierna”. Det har nu kostat honom USA-visumet. Han kritiseras även på hemmaplan för att använda sin Israelkritik till att försöka stärka sina chanser att bli omvald nästa år.",
+    "title": "Colombias president kritiseras för sina ställningstagande mot Israel – mister visum till USA"
+  },
+  "corrected_article": {
+    "body": [
+      "På den internationella banan har Gustavo Petro länge varit en av de hårdaste kritikerna av Israels krigföring i Gaza. Han reagerade kraftigt på den dåvarande försvarsministern Yoav Galant, som kort efter 7 oktober 2023 försvarade invasionen med orden: ”vi kämpar mot människodjur och agerar därefter.”",
+      "– Detta är vad nazisterna sade om judarna. Allt detta hat, om det fortsätter, kommer att leda till ett folkmord, sade Gustavo Petro för snart två år sedan.",
+      "I maj förra året bröt Colombia de diplomatiska relationerna med Israel och stödde sydafrikas rättsliga åtgärder mot Israels ledarskikt. Efter FN-mötet i New York i förra veckan ställde Petro sig på Dag Hammarskjöld Plaza utanför FN-högkvarteret och uppmanade till en global militärinsats för att befria Palestina från israeliska trupper.",
+      "– Den här internationella styrkan måste vara större än den som leds av USA. Därför vill jag här i New York be alla soldater i USA:s armé att inte rikta sina vapen mot mänskligheten, sade han på torget.",
+      "Som straff för sina uttalanden drog de amerikanska myndigheterna in hans visum till USA.",
+      "I Colombia har Petro fått utstå mycket kritik för sitt ställningstagande mot det som han ser som Israels folkmord, även om han också fått mycket stöd. Till höger menar många att han använder sin Israelkritik för att stärka sin politiska ställning inför nästa års presidentval. 34 procent av väljarna tycker att Petros vänsterregering gör ett bra jobb för landet, men hela 62 procent motsätter sig hans ledarskap, enligt en färsk undersökning som Bloomberg News beställt.",
+      "”Det är bättre att han avgår och ägnar sig på heltid åt att organisera den palestinska befrielsearmén som han föreslår”, skriver Andrés Forero, kongressledamot för högerpopulistiska Centro Democrático, på plattformen X. Han menar att Petro ”inte bryr sig om det våld som plågar Colombia, för han är fokuserad på tragedin i Gaza”.",
+      "Även kongressledamoten Lina Garrido, som företräder högerpartiet Cambio Radical kritiserar Gustavo Petros engagemang för befolkningen i Gaza. Hon anser att presidenten inte arbetar för sitt eget land.",
+      "”Du är pratig och lat. Om du verkligen vill vara en man, så led då militärstyrkan själv”, skrev hon på X – men tog senare bort inlägget.",
+      "Hon får medhåll av senatorn och högerradikalen María Fernanda Cabal som väntas bli en av Gustavo Petros motkandidater under nästa års presidentval. Hon kritiserar Petro för att han startade sin politiska bana genom att under 1980-talet gå med i en marxistisk gerillagrupp som använde våld för att kämpa för social rättvisa i Latinamerikas tredje största land.",
+      "”Hör du, Petro, vill du nu ta upp vapnen igen för att försvara Palestina, bara för att du inte kan styra Colombia?” frågar hon på X och fortsätter: ”Någon som du är ovärdig att leda det här landet. Vi förtjänar välstånd och utveckling, inte en cirkus med ny föreställning varje dag”.",
+      "När Colombia bröt de diplomatiska relationerna med Israel förra året öppnade landet i stället en diplomatisk mission i Ramallah på Västbanken. Colombia har historiska band till Palestina på grund av att många colombianer härstammar från de palestinier, libaneser och syrier som flydde konflikterna under Osmanska riket i början av 1900-talet och sökte sig till Colombia. Landets mest kända artist, sångerskan Shakira, är av libanesiskt ursprung."
+    ],
+    "lead": "RIO DE JANEIRO. Colombias vänsterpresident Gustavo Petro – som var gerillamedlem på 1980-talet – vill skicka en internationell militärstyrka till Gaza för att ”befria palestinierna”. Det har nu kostat honom USA-visumet. Han kritiseras även på hemmaplan för att använda sin Israelkritik för att försöka stärka sina chanser att bli omvald nästa år.",
+    "title": "Colombias president kritiseras för sitt ställningstagande mot Israel – mister visum till USA"
+  }
+}
