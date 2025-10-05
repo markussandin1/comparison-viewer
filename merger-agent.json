@@ -1,0 +1,15 @@
+{
+  "article_id": "<id>",
+  "corrected_article": {
+    "title": "...",
+    "lead": "...",
+    "body": ["..."],
+    "captions": ["..."]
+  },
+  "applied": [
+    { "agent": "<agent-namn>", "path": "<fält>", "before": "<före>", "after": "<efter>" }
+  ],
+  "unapplied": [
+    { "agent": "<agent-namn>", "path": "<fält>", "reason": "<orsak>" }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "agent": {
+    "type": "string",
+    "description": "Sätt in agentens namn här"
+  },
+  "article_id": {
+    "type": ["string", "null"],
+    "description": "Artikel id om sånt finns"
+  },
+  "patches": {
+    "type": "array",
+    "description": "Åtgärder som föreslås göras i texten",
+    "items": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": ""
+        },
+        "before": {
+          "type": "string",
+          "description": "före ändring"
+        },
+        "after": {
+          "type": "string",
+          "description": "efter ändring"
+        },
+        "context_left": {
+          "type": "string",
+          "description": "Några ords kontext vänster om ändringen"
+        },
+        "context_right": {
+          "type": "string",
+          "description": "Några ords kontext höger om ändringen"
+        }
+      }
+    }
+  },
+  "content": {
+    "type": "string",
+    "description": "Fullständiga svaret."
+  }
+}
