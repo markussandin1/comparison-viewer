@@ -11,6 +11,10 @@ RUN npm install
 # Copy source files
 COPY . .
 
+# Set a placeholder API URL for build (will be replaced at runtime)
+ARG VITE_API_URL=__VITE_API_URL__
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build the application
 RUN npm run build
 

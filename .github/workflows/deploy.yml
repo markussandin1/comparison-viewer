@@ -66,8 +66,8 @@ jobs:
       - name: Build Frontend
         run: |
           cd ${{ github.workspace }}
-          echo "VITE_API_URL=${{ steps.backend-url.outputs.url }}" > .env
-          docker build -t gcr.io/${{ env.PROJECT_ID }}/correction-viewer-frontend .
+          docker build --build-arg VITE_API_URL=${{ steps.backend-url.outputs.url }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/correction-viewer-frontend .
 
       - name: Push to GCR
         run: |
