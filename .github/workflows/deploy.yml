@@ -3,12 +3,6 @@ name: Deploy to Cloud Run
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'src/**'
-      - 'Dockerfile'
-      - '.github/workflows/deploy.yml'
 
 env:
   PROJECT_ID: text-comparison-474220
