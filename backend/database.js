@@ -112,7 +112,7 @@ function listCorrections() {
       id: row[0],
       article_id: row[1],
       title: title,
-      created_at: row[3]
+      created_at: row[3] + 'Z' // Mark as UTC
     };
   });
 }
@@ -136,7 +136,7 @@ function getCorrection(id) {
     corrected_article: JSON.parse(row[columns.indexOf('corrected_article')]),
     applied: JSON.parse(row[columns.indexOf('applied')]),
     unapplied: JSON.parse(row[columns.indexOf('unapplied')]),
-    created_at: row[columns.indexOf('created_at')]
+    created_at: row[columns.indexOf('created_at')] + 'Z' // Mark as UTC
   };
 }
 
