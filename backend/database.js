@@ -25,6 +25,7 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS corrections (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       article_id TEXT,
+      source_url TEXT,
       original_article TEXT NOT NULL,
       corrected_article TEXT NOT NULL,
       applied TEXT,
@@ -70,10 +71,11 @@ function saveCorrection(data) {
   }
 
   db.run(
-    `INSERT INTO corrections (article_id, original_article, corrected_article, applied, unapplied)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO corrections (article_id, source_url, original_article, corrected_article, applied, unapplied)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
       Array.isArray(data.article_id) ? data.article_id[0] : (data.article_id || null),
+      data.source_url || null,
       JSON.stringify(originalArticle),
       JSON.stringify(correctedArticle),
       JSON.stringify(data.applied || []),
@@ -89,13 +91,13 @@ function saveCorrection(data) {
 }
 
 // Extract domain from URL
-function extractSource(articleId) {
-  if (!articleId) return null;
+function extractSource(sourceUrl) {
+  if (!sourceUrl) return null;
 
   try {
     // Check if it's a URL
-    if (articleId.startsWith('http://') || articleId.startsWith('https://')) {
-      const url = new URL(articleId);
+    if (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://')) {
+      const url = new URL(sourceUrl);
       // Remove www. prefix if present
       return url.hostname.replace(/^www\./, '');
     }
@@ -108,7 +110,7 @@ function extractSource(articleId) {
 
 function listCorrections() {
   const result = db.exec(`
-    SELECT id, article_id, original_article, created_at
+    SELECT id, article_id, source_url, original_article, created_at
     FROM corrections
     ORDER BY created_at DESC
   `);
@@ -120,7 +122,7 @@ function listCorrections() {
   return result[0].values.map(row => {
     let title = null;
     try {
-      const originalArticle = JSON.parse(row[2]);
+      const originalArticle = JSON.parse(row[3]);
       title = originalArticle?.title || null;
     } catch (e) {
       // Ignore parse errors
@@ -129,9 +131,10 @@ function listCorrections() {
     return {
       id: row[0],
       article_id: row[1],
+      source_url: row[2],
       title: title,
-      source: extractSource(row[1]),
-      created_at: row[3] + 'Z' // Mark as UTC
+      source: extractSource(row[2]),
+      created_at: row[4] + 'Z' // Mark as UTC
     };
   });
 }
