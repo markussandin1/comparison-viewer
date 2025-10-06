@@ -335,8 +335,8 @@ function CorrectionsList({ corrections, selectedId, onSelect }) {
                 selectedId === correction.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
               }`}
             >
-              <div className="font-medium text-sm text-gray-800">
-                {correction.article_id || `Correction #${correction.id}`}
+              <div className="font-medium text-sm text-gray-800 line-clamp-2">
+                {correction.title || correction.article_id || `Correction #${correction.id}`}
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 {new Date(correction.created_at).toLocaleString('sv-SE')}
@@ -445,7 +445,7 @@ export default function ArticleDiffViewer() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-800">
-                      {currentCorrection.article_id || `Correction #${currentCorrection.id}`}
+                      {currentCorrection.original_article?.title || currentCorrection.article_id || `Correction #${currentCorrection.id}`}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
                       {new Date(currentCorrection.created_at).toLocaleString('sv-SE')}

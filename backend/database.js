@@ -90,7 +90,7 @@ function saveCorrection(data) {
 
 function listCorrections() {
   const result = db.exec(`
-    SELECT id, article_id, created_at
+    SELECT id, article_id, original_article, created_at
     FROM corrections
     ORDER BY created_at DESC
   `);
@@ -99,11 +99,22 @@ function listCorrections() {
     return [];
   }
 
-  return result[0].values.map(row => ({
-    id: row[0],
-    article_id: row[1],
-    created_at: row[2]
-  }));
+  return result[0].values.map(row => {
+    let title = null;
+    try {
+      const originalArticle = JSON.parse(row[2]);
+      title = originalArticle?.title || null;
+    } catch (e) {
+      // Ignore parse errors
+    }
+
+    return {
+      id: row[0],
+      article_id: row[1],
+      title: title,
+      created_at: row[3]
+    };
+  });
 }
 
 function getCorrection(id) {
