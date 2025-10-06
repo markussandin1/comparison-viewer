@@ -86,11 +86,10 @@ function saveCorrection(data) {
   }
 
   db.run(
-    `INSERT INTO corrections (article_id, source_url, original_article, corrected_article, applied, unapplied)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO corrections (article_id, original_article, corrected_article, applied, unapplied)
+     VALUES (?, ?, ?, ?, ?)`,
     [
       Array.isArray(data.article_id) ? data.article_id[0] : (data.article_id || null),
-      data.source_url || null,
       JSON.stringify(originalArticle),
       JSON.stringify(correctedArticle),
       JSON.stringify(Array.isArray(data.applied) ? data.applied : []),
@@ -125,7 +124,7 @@ function extractSource(sourceUrl) {
 
 function listCorrections() {
   const result = db.exec(`
-    SELECT id, article_id, source_url, original_article, created_at
+    SELECT id, article_id, original_article, created_at
     FROM corrections
     ORDER BY created_at DESC
   `);
@@ -138,23 +137,19 @@ function listCorrections() {
     let title = null;
     let articleUrl = null;
     try {
-      const originalArticle = JSON.parse(row[3]);
+      const originalArticle = JSON.parse(row[2]);
       title = originalArticle?.title || null;
       articleUrl = originalArticle?.url || null;
     } catch (e) {
       // Ignore parse errors
     }
 
-    // Priority: source_url field, then original_article.url
-    const sourceForExtraction = row[2] || articleUrl;
-
     return {
       id: row[0],
       article_id: row[1],
-      source_url: row[2],
       title: title,
-      source: extractSource(sourceForExtraction),
-      created_at: row[4] + 'Z' // Mark as UTC
+      source: extractSource(articleUrl),
+      created_at: row[3] + 'Z' // Mark as UTC
     };
   });
 }
