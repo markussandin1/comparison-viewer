@@ -339,7 +339,14 @@ function CorrectionsList({ corrections, selectedId, onSelect }) {
                 {correction.title || correction.article_id || `Correction #${correction.id}`}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {new Date(correction.created_at).toLocaleString('sv-SE')}
+                {new Date(correction.created_at).toLocaleString('sv-SE', {
+                  timeZone: 'Europe/Stockholm',
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </div>
             </div>
           ))
@@ -448,7 +455,14 @@ export default function ArticleDiffViewer() {
                       {currentCorrection.original_article?.title || currentCorrection.article_id || `Correction #${currentCorrection.id}`}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
-                      {new Date(currentCorrection.created_at).toLocaleString('sv-SE')}
+                      {new Date(currentCorrection.created_at).toLocaleString('sv-SE', {
+                        timeZone: 'Europe/Stockholm',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
                   </div>
                   <div className="text-right">
