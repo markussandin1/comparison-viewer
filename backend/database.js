@@ -34,6 +34,21 @@ async function initDatabase() {
     )
   `);
 
+  // Migration: Add source_url column if it doesn't exist
+  try {
+    const tableInfo = db.exec("PRAGMA table_info(corrections)");
+    if (tableInfo.length > 0) {
+      const columns = tableInfo[0].values.map(col => col[1]); // column name is at index 1
+      if (!columns.includes('source_url')) {
+        console.log('Adding source_url column to corrections table');
+        db.run('ALTER TABLE corrections ADD COLUMN source_url TEXT');
+        saveDatabase();
+      }
+    }
+  } catch (e) {
+    console.error('Migration error:', e);
+  }
+
   // Save to disk
   saveDatabase();
 }
@@ -78,8 +93,8 @@ function saveCorrection(data) {
       data.source_url || null,
       JSON.stringify(originalArticle),
       JSON.stringify(correctedArticle),
-      JSON.stringify(data.applied || []),
-      JSON.stringify(data.unapplied || [])
+      JSON.stringify(Array.isArray(data.applied) ? data.applied : []),
+      JSON.stringify(Array.isArray(data.unapplied) ? data.unapplied : [])
     ]
   );
 
