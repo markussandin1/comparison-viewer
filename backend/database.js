@@ -121,19 +121,24 @@ function listCorrections() {
 
   return result[0].values.map(row => {
     let title = null;
+    let articleUrl = null;
     try {
       const originalArticle = JSON.parse(row[3]);
       title = originalArticle?.title || null;
+      articleUrl = originalArticle?.url || null;
     } catch (e) {
       // Ignore parse errors
     }
+
+    // Priority: source_url field, then original_article.url
+    const sourceForExtraction = row[2] || articleUrl;
 
     return {
       id: row[0],
       article_id: row[1],
       source_url: row[2],
       title: title,
-      source: extractSource(row[2]),
+      source: extractSource(sourceForExtraction),
       created_at: row[4] + 'Z' // Mark as UTC
     };
   });
