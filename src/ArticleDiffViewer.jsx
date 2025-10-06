@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams, Routes, Route } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -356,23 +357,28 @@ function CorrectionsList({ corrections, selectedId, onSelect }) {
   );
 }
 
-// Main component
-export default function ArticleDiffViewer() {
+// Correction viewer component
+function CorrectionViewer() {
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [corrections, setCorrections] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
   const [currentCorrection, setCurrentCorrection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const selectedId = id ? parseInt(id) : null;
 
   // Fetch all corrections on mount
   useEffect(() => {
     fetchCorrections();
   }, []);
 
-  // Fetch selected correction details
+  // Fetch selected correction details when ID changes
   useEffect(() => {
     if (selectedId) {
       fetchCorrection(selectedId);
+    } else {
+      setCurrentCorrection(null);
     }
   }, [selectedId]);
 
@@ -384,9 +390,9 @@ export default function ArticleDiffViewer() {
       const data = await response.json();
       setCorrections(data);
 
-      // Auto-select first correction if available
+      // Auto-navigate to first correction if no ID in URL
       if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0].id);
+        navigate(`/correction/${data[0].id}`, { replace: true });
       }
     } catch (err) {
       setError(`Error loading corrections: ${err.message}`);
@@ -420,7 +426,7 @@ export default function ArticleDiffViewer() {
       <CorrectionsList
         corrections={corrections}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={(id) => navigate(`/correction/${id}`)}
       />
 
       <div className="flex-1 overflow-y-auto">
@@ -533,5 +539,15 @@ export default function ArticleDiffViewer() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component with routing
+export default function ArticleDiffViewer() {
+  return (
+    <Routes>
+      <Route path="/" element={<CorrectionViewer />} />
+      <Route path="/correction/:id" element={<CorrectionViewer />} />
+    </Routes>
   );
 }
