@@ -45,9 +45,14 @@ app.post('/api/corrections', (req, res) => {
     // Save to database
     const id = db.saveCorrection(data);
 
+    // Get frontend URL from environment or use default
+    const frontendUrl = process.env.FRONTEND_URL || 'https://correction-viewer-frontend-qpfdynkt7a-lz.a.run.app';
+    const correctionUrl = `${frontendUrl}/correction/${id}`;
+
     res.status(201).json({
       success: true,
       id,
+      url: correctionUrl,
       message: 'Correction saved successfully'
     });
   } catch (error) {
