@@ -88,6 +88,24 @@ function saveCorrection(data) {
   return result[0].values[0][0];
 }
 
+// Extract domain from URL
+function extractSource(articleId) {
+  if (!articleId) return null;
+
+  try {
+    // Check if it's a URL
+    if (articleId.startsWith('http://') || articleId.startsWith('https://')) {
+      const url = new URL(articleId);
+      // Remove www. prefix if present
+      return url.hostname.replace(/^www\./, '');
+    }
+  } catch (e) {
+    // Not a valid URL
+  }
+
+  return null;
+}
+
 function listCorrections() {
   const result = db.exec(`
     SELECT id, article_id, original_article, created_at
@@ -112,6 +130,7 @@ function listCorrections() {
       id: row[0],
       article_id: row[1],
       title: title,
+      source: extractSource(row[1]),
       created_at: row[3] + 'Z' // Mark as UTC
     };
   });

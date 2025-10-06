@@ -318,11 +318,30 @@ function PatchesTable({ title, items, type }) {
 }
 
 // Sidebar list component
-function CorrectionsList({ corrections, selectedId, onSelect }) {
+function CorrectionsList({ corrections, selectedId, onSelect, selectedSource, onSourceChange }) {
+  // Extract unique sources from corrections
+  const sources = useMemo(() => {
+    const uniqueSources = [...new Set(corrections.map(c => c.source).filter(Boolean))];
+    return uniqueSources.sort();
+  }, [corrections]);
+
   return (
     <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto">
       <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800">Corrections</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">Corrections</h2>
+
+        {sources.length > 0 && (
+          <select
+            value={selectedSource || ''}
+            onChange={(e) => onSourceChange(e.target.value || null)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Alla källor</option>
+            {sources.map(source => (
+              <option key={source} value={source}>{source}</option>
+            ))}
+          </select>
+        )}
       </div>
       <div className="divide-y divide-gray-100">
         {corrections.length === 0 ? (
@@ -365,8 +384,15 @@ function CorrectionViewer() {
   const [currentCorrection, setCurrentCorrection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedSource, setSelectedSource] = useState(null);
 
   const selectedId = id ? parseInt(id) : null;
+
+  // Filter corrections by source
+  const filteredCorrections = useMemo(() => {
+    if (!selectedSource) return corrections;
+    return corrections.filter(c => c.source === selectedSource);
+  }, [corrections, selectedSource]);
 
   // Fetch all corrections on mount
   useEffect(() => {
@@ -424,9 +450,11 @@ function CorrectionViewer() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <CorrectionsList
-        corrections={corrections}
+        corrections={filteredCorrections}
         selectedId={selectedId}
         onSelect={(id) => navigate(`/correction/${id}`)}
+        selectedSource={selectedSource}
+        onSourceChange={setSelectedSource}
       />
 
       <div className="flex-1 overflow-y-auto">
