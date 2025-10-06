@@ -373,14 +373,14 @@ function CorrectionViewer() {
     fetchCorrections();
   }, []);
 
-  // Fetch selected correction details when ID changes
+  // Fetch selected correction details when ID changes and corrections are loaded
   useEffect(() => {
-    if (selectedId) {
+    if (selectedId && !loading) {
       fetchCorrection(selectedId);
-    } else {
+    } else if (!selectedId) {
       setCurrentCorrection(null);
     }
-  }, [selectedId]);
+  }, [selectedId, loading]);
 
   const fetchCorrections = async () => {
     try {
