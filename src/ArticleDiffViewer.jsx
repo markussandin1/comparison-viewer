@@ -358,6 +358,19 @@ function CorrectionsList({ corrections, selectedId, onSelect, selectedSource, on
               <div className="font-medium text-sm text-gray-800 line-clamp-2">
                 {correction.title || correction.article_id || `Correction #${correction.id}`}
               </div>
+              {correction.url && (
+                <div className="text-xs text-blue-600 mt-1 truncate">
+                  <a
+                    href={correction.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:underline"
+                  >
+                    {correction.url}
+                  </a>
+                </div>
+              )}
               <div className="text-xs text-gray-500 mt-1">
                 {new Date(correction.created_at).toLocaleString('sv-SE', {
                   timeZone: 'Europe/Stockholm',
@@ -545,7 +558,7 @@ function CorrectionViewer() {
                           ? currentCorrection.corrected_article.body.join('\n\n')
                           : (currentCorrection.corrected_article.body || '')
                       }
-                      patches={currentCorrection.applied?.filter(p => p.path.startsWith('body')) || []}
+                      patches={currentCorrection.applied?.filter(p => p.path && p.path.startsWith('body')) || []}
                     />
                   </>
                 )}

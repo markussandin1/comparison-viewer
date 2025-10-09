@@ -42,6 +42,21 @@ app.post('/api/corrections', (req, res) => {
       });
     }
 
+    // Validate that we have meaningful content
+    const hasContent =
+      (data.corrected_article.body &&
+       ((Array.isArray(data.corrected_article.body) && data.corrected_article.body.length > 0) ||
+        (typeof data.corrected_article.body === 'string' && data.corrected_article.body.trim().length > 0))) ||
+      (data.original_article?.body &&
+       typeof data.original_article.body === 'string' &&
+       data.original_article.body.trim().length > 0);
+
+    if (!hasContent) {
+      return res.status(400).json({
+        error: 'Correction must have content in body field'
+      });
+    }
+
     // Save to database
     const id = db.saveCorrection(data);
 

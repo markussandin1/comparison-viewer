@@ -148,6 +148,7 @@ function listCorrections() {
       id: row[0],
       article_id: row[1],
       title: title,
+      url: articleUrl,
       source: extractSource(articleUrl),
       created_at: row[3] + 'Z' // Mark as UTC
     };
