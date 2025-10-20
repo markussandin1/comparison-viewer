@@ -178,7 +178,8 @@ app.get('/api/articles/:url(*)', (req, res) => {
   }
 
   try {
-    const url = req.params.url;
+    // Decode URL parameter (may be URL-encoded from frontend)
+    const url = decodeURIComponent(req.params.url);
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -207,16 +208,17 @@ app.post('/api/articles/:url(*)/gold-standard', (req, res) => {
   }
 
   try {
-    const url = req.params.url;
+    // Decode URL parameter (may be URL-encoded from frontend)
+    const url = decodeURIComponent(req.params.url);
     const { title, lead, body, metadata } = req.body;
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
 
-    if (!title && !lead && !body) {
+    if (!title && !body) {
       return res.status(400).json({
-        error: 'At least one field (title, lead, or body) is required'
+        error: 'At least one field (title or body) is required'
       });
     }
 
