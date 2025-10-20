@@ -151,6 +151,92 @@ app.delete('/api/corrections/:id', (req, res) => {
   }
 });
 
+// ===== NEW ARTICLES ENDPOINTS =====
+
+// GET all articles (overview)
+app.get('/api/articles', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
+  try {
+    const articles = db.listArticles();
+    res.json(articles);
+  } catch (error) {
+    console.error('Error fetching articles:', error);
+    res.status(500).json({
+      error: 'Failed to fetch articles',
+      details: error.message
+    });
+  }
+});
+
+// GET single article with all runs
+app.get('/api/articles/:url(*)', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
+  try {
+    const url = req.params.url;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    const article = db.getArticleWithRuns(url);
+
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    res.json(article);
+  } catch (error) {
+    console.error('Error fetching article:', error);
+    res.status(500).json({
+      error: 'Failed to fetch article',
+      details: error.message
+    });
+  }
+});
+
+// POST gold standard for an article
+app.post('/api/articles/:url(*)/gold-standard', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
+  try {
+    const url = req.params.url;
+    const { title, lead, body, metadata } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    if (!title && !lead && !body) {
+      return res.status(400).json({
+        error: 'At least one field (title, lead, or body) is required'
+      });
+    }
+
+    const goldStandard = { title, lead, body };
+    const result = db.saveGoldStandard(url, goldStandard, metadata);
+
+    res.json({
+      success: true,
+      message: 'Gold standard saved successfully',
+      conflicts: result.conflicts
+    });
+  } catch (error) {
+    console.error('Error saving gold standard:', error);
+    res.status(500).json({
+      error: 'Failed to save gold standard',
+      details: error.message
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

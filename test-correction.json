@@ -1,0 +1,22 @@
+{
+  "original_article": {
+    "url": "https://svd.se/test-artikel-123",
+    "title": "Test artikel",
+    "lead": "Detta är en testingress",
+    "body": ["Detta är första stycket.", "Detta är andra stycket."]
+  },
+  "corrected_article": {
+    "title": "Testartikel",
+    "lead": "Detta är en testingress",
+    "body": ["Detta är första stycket.", "Detta är det andra stycket."]
+  },
+  "applied": [
+    {
+      "agent": "grammar",
+      "path": "title",
+      "before": "Test artikel",
+      "after": "Testartikel"
+    }
+  ],
+  "unapplied": []
+}

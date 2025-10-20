@@ -1,0 +1,88 @@
+{
+  "applied": [
+    {
+      "path": "body[1]",
+      "after": "Ketziot-fängelset",
+      "agent": "spelling-swe",
+      "before": "Ketziotfängelset"
+    },
+    {
+      "path": "body[2]",
+      "after": "Ketziot-fängelset",
+      "agent": "spelling-swe",
+      "before": "Ketziotfängelset"
+    },
+    {
+      "path": "body[3]",
+      "after": "Global sumud-flotilla",
+      "agent": "compound-swe@0.1",
+      "before": "Global sumud flotilla"
+    },
+    {
+      "path": "body[1]",
+      "after": "anstalten är känd för att inte tillgodose basala behov och för att neka fångarna kontakt med omvärlden, enligt FN.",
+      "agent": "tt-spraket-agent",
+      "before": "är anstalten känd för att inte tillgodose basala behov och neka fångarna kontakt med omvärlden, enligt ett uttalande från FN."
+    },
+    {
+      "path": "body[3]",
+      "after": "högerextremisten Itamar Ben-Gvir har sagt att Greta Thunberg och de andra aktivisterna som reste mot Gaza på Global sumud flotilla \"förtjänar att bli behandlade som terrorister\" i fängelset, enligt Jerusalem Post.",
+      "agent": "tt-spraket-agent",
+      "before": "den högerextrema Itamar Ben-Gvir, har sagt att Greta Thunberg och de andra aktivisterna som reste mot Gaza på Global sumud flotilla \"förtjänar att bli behandlade som terrorister\" i fängelset, enligt Jerusalem Post."
+    },
+    {
+      "path": "body[5]",
+      "after": "Det finns även uppgifter om att fångarna saknade tillgång till nödvändiga mediciner, mat och vatten.",
+      "agent": "tt-spraket-agent",
+      "before": "Det finns även uppgifter om att fångarna saknade tillgång till nödvändiga mediciner och tillräckligt med mat och vatten."
+    },
+    {
+      "path": "body[10]",
+      "after": "för att stävja bland annat demonstrationer.",
+      "agent": "tt-spraket-agent",
+      "before": "för att stävja, bland annat, demonstrationer."
+    },
+    {
+      "path": "body[3]",
+      "after": "Global Sumud Flotilla",
+      "agent": "upperLowerCaseAgent@0.1",
+      "before": "Global sumud flotilla"
+    }
+  ],
+  "unapplied": [
+    {
+      "path": "body[1]",
+      "agent": "whitespace-swe@0.1",
+      "reason": "kunde inte hitta before+context"
+    },
+    {
+      "path": "body[3]",
+      "agent": "whitespace-swe@0.1",
+      "reason": "kunde inte hitta before+context"
+    }
+  ],
+  "original_article": {
+    "body": "Israels sätt att behandla europeiska medborgare kan vara ett sätt att visa sitt missnöje med hur länder svängt i sin inställning till kriget i Gaza, säger Alexander Atarodi, Mellanösternexpert och tidigare forskare på Totalförsvarets forskningsinstitut.\n\nOmkring 470 aktivister från tiotals olika länder har placerats på det ökända Ketziotfängelset, i ett ökenområde i södra Israel. Många av fängelsets platser är reserverade för \"säkerhetsfångar\" och är anstalten känd för att inte tillgodose basala behov och neka fångarna kontakt med omvärlden, enligt ett uttalande från FN.\n\nDet är väldigt många palestinska fångar som hamnat där. Att placera aktivisterna på Ketziotfängelset är en tydlig markering om att man inte accepterar att någon försöker ta sig in i Gaza, säger Alexander Atarodi.\n\nIsraels minister för nationell säkerhet, den högerextrema Itamar Ben-Gvir, har sagt att Greta Thunberg och de andra aktivisterna som reste mot Gaza på Global sumud flotilla \"förtjänar att bli behandlade som terrorister\" i fängelset, enligt Jerusalem Post.\n\nNär svenska UD:s representant besökte fängelset i veckan fick de information om hårdhänt och ibland rasistisk behandling. Vissa hade burit handfängsel i 24 timmar eller hade synliga skador. Det finns även uppgifter om att fångarna saknade tillgång till nödvändiga mediciner och tillräckligt med mat och vatten. Liknande uppgifter har kommit från de aktivister som släppts.\n\nJag tror att man kan se allt detta som en del av Israels hårdare ordalag och ändrade förhållningssätt till stora delar av omvärlden. Det är uppenbart att man inte bryr sig lika mycket om relationerna till Europa som förr, säger Alexander Atarodi.\n\nHan pekar på två orsaker till Israels likgiltighet inför omvärlden. Dels handlar det om Europas skärpta ton i kriget i Gaza, dels om Donald Trumps aldrig sinande stöd.\n\nSå länge man har USA:s uppbackning så bryr man sig mycket mindre om resten av världen, säger han och fortsätter:\n\nDet här är också en konsekvens av att relationerna har blivit mycket sämre. I Netanyahus tal i FN framgick hur arg han är på länder som har erkänt Palestina. Han använde otroligt hårda ordalag när han beskrev Storbritannien, Frankrike, Kanada – länder som tidigare setts som allierade.\n\nOmkring 170 av de totalt 470 aktivister som fängslats av Israel har hittills släppts. På söndagen uppgav utrikesminister Maria Malmer Stenergard att Israel planerar att släppa och flyga ut de fängslade svenskarna på måndagen.\n\nAtt behandla aktivister på ett hårdhänt och kränkande sätt kommer sannolikt inte påverka relationen till Donald Trump – som själv skickat nationalgardet till städer runt om i USA för att stävja, bland annat, demonstrationer.\n\nMan vill inte att aktivisterna når Gaza av samma skäl som man inte vill att internationella journalister kommer in, menar Alexander Atarodi.\n\nMan kommer aldrig att acceptera att någon tar sig in, eftersom att man inte vill att nyheter från Gaza kommer ut, säger han.",
+    "lead": "Israels hantering av fångarna i den internationella hjälpkonvojen är betydligt hårdare denna gång än när aktivisterna greps i somras. Behandlingen visar på skiftet i inställningen till omvärlden, menar Mellanösternexperten Alexander Atarodi.",
+    "title": "Expert: Därför behandlar Israel aktivisterna hårdare nu"
+  },
+  "corrected_article": {
+    "body": [
+      "Israels sätt att behandla europeiska medborgare kan vara ett sätt att visa sitt missnöje med hur länder svängt i sin inställning till kriget i Gaza, säger Alexander Atarodi, Mellanösternexpert och tidigare forskare på Totalförsvarets forskningsinstitut.",
+      "Omkring 470 aktivister från tiotals olika länder har placerats på det ökända Ketziot-fängelset i ett ökenområde i södra Israel. Många av fängelsets platser är reserverade för \"säkerhetsfångar\" och anstalten är känd för att inte tillgodose basala behov och för att neka fångarna kontakt med omvärlden, enligt FN.",
+      "Det är väldigt många palestinska fångar som hamnat där. Att placera aktivisterna på Ketziot-fängelset är en tydlig markering om att man inte accepterar att någon försöker ta sig in i Gaza, säger Alexander Atarodi.",
+      "Israels minister för nationell säkerhet, högerextremisten Itamar Ben-Gvir har sagt att Greta Thunberg och de andra aktivisterna som reste mot Gaza på Global Sumud Flotilla \"förtjänar att bli behandlade som terrorister\" i fängelset, enligt Jerusalem Post.",
+      "När svenska UD:s representant besökte fängelset i veckan fick de information om hårdhänt och ibland rasistisk behandling. Vissa hade burit handfängsel i 24 timmar eller hade synliga skador. Det finns även uppgifter om att fångarna saknade tillgång till nödvändiga mediciner, mat och vatten. Liknande uppgifter har kommit från de aktivister som släppts.",
+      "Jag tror att man kan se allt detta som en del av Israels hårdare ordalag och ändrade förhållningssätt till stora delar av omvärlden. Det är uppenbart att man inte bryr sig lika mycket om relationerna till Europa som förr, säger Alexander Atarodi.",
+      "Han pekar på två orsaker till Israels likgiltighet inför omvärlden. Dels handlar det om Europas skärpta ton i kriget i Gaza, dels om Donald Trumps aldrig sinande stöd.",
+      "Så länge man har USA:s uppbackning så bryr man sig mycket mindre om resten av världen, säger han och fortsätter:",
+      "Det här är också en konsekvens av att relationerna har blivit mycket sämre. I Netanyahus tal i FN framgick hur arg han är på länder som har erkänt Palestina. Han använde otroligt hårda ordalag när han beskrev Storbritannien, Frankrike, Kanada – länder som tidigare setts som allierade.",
+      "Omkring 170 av de totalt 470 aktivister som fängslats av Israel har hittills släppts. På söndagen uppgav utrikesminister Maria Malmer Stenergard att Israel planerar att släppa och flyga ut de fängslade svenskarna på måndagen.",
+      "Att behandla aktivister på ett hårdhänt och kränkande sätt kommer sannolikt inte påverka relationen till Donald Trump – som själv skickat nationalgardet till städer runt om i USA för att stävja bland annat demonstrationer.",
+      "Man vill inte att aktivisterna når Gaza av samma skäl som man inte vill att internationella journalister kommer in, menar Alexander Atarodi.",
+      "Man kommer aldrig att acceptera att någon tar sig in, eftersom att man inte vill att nyheter från Gaza kommer ut, säger han."
+    ],
+    "lead": "Israels hantering av fångarna i den internationella hjälpkonvojen är betydligt hårdare denna gång än när aktivisterna greps i somras. Behandlingen visar på skiftet i inställningen till omvärlden, menar Mellanösternexperten Alexander Atarodi.",
+    "title": "Expert: Därför behandlar Israel aktivisterna hårdare nu"
+  }
+}

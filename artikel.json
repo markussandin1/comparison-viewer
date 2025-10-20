@@ -1,0 +1,15 @@
+{
+  "title": "Exempelrubrik",
+  "lead": "Detta är ingressen till artikeln som sammanfattar innehållet.",
+  "body": [
+    "Första stycket i brödtexten.",
+    "Andra stycket i brödtexten.",
+    "Tredje stycket i brödtexten."
+  ],
+  "captions": [
+    "Bildtext till första bilden.",
+    "Bildtext till andra bilden."
+  ],
+  "article_id": "12345",
+  "content": "Fullständiga svaret eller hela artikeltexten kan sammanfattas här."
+}

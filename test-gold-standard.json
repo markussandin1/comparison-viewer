@@ -1,0 +1,9 @@
+{
+  "title": "Testartikel",
+  "lead": "Detta är en testingress",
+  "body": "Detta är första stycket.\n\nDetta är det andra stycket.",
+  "metadata": {
+    "corrector": "Test User",
+    "notes": "Fixade stavfel"
+  }
+}
