@@ -169,12 +169,12 @@ Uses Myers algorithm (`myersDiff` function) for efficient word-level diffing. To
   "original_article": {
     "url": "https://www.example.com/article",
     "title": "string",
-    "lead": "string (optional)",
+    "lead": "string (optional - combined with body in UI)",
     "body": ["array", "of", "paragraphs"] | "string"
   },
   "corrected_article": {
     "title": "string",
-    "lead": "string (optional)",
+    "lead": "string (optional - combined with body in UI)",
     "body": ["array", "of", "paragraphs"]
   },
   "applied": [
@@ -195,12 +195,19 @@ Uses Myers algorithm (`myersDiff` function) for efficient word-level diffing. To
 }
 ```
 
+**Note on lead field:** The `lead` field is accepted in API requests for backward compatibility, but in the UI it is automatically combined with `body` for display. The upload form only has title and body fields. If lead data exists, it's prepended to body with `\n\n` separator.
+
 ### Gold Standard Format
-Gold standard is stored as three separate text fields (not JSON) to match copy-paste workflow from Google Docs/CMS:
+Gold standard is stored as two text fields (title and body) in the database. Lead is stored separately in the database for backward compatibility but is **not shown as a separate field in the UI**.
+
+**Upload form:**
+- Title field
+- Body field (user pastes title + lead + body together here)
+
+**Storage:**
 ```javascript
 {
   "title": "Corrected title as plain text",
-  "lead": "Corrected lead as plain text",
   "body": "Corrected body as plain text (paragraphs separated by \\n\\n)",
   "metadata": {
     "corrector": "Person name (optional)",
@@ -208,6 +215,9 @@ Gold standard is stored as three separate text fields (not JSON) to match copy-p
   }
 }
 ```
+
+**Display behavior:**
+When displaying article content, if `lead` exists in the data (from older imports), it is automatically combined with `body` using double newline (`lead\n\n body`). This ensures no data is lost while keeping the UI simple with just title and body fields.
 
 ### Recommended Run Selection
 When gold standard exists, the system automatically recommends the run with the highest F1-score. This run is highlighted with a green border and "⭐ Recommended" badge.

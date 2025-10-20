@@ -276,9 +276,19 @@ export default function ArticleDetail() {
 
 // Gold Standard Upload Form Component
 function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCancel }) {
+  // Combine lead + body if gold standard has both
+  const combineLeadAndBody = (goldStandard) => {
+    if (!goldStandard) return '';
+    const lead = goldStandard.lead || '';
+    const body = goldStandard.body || '';
+    if (lead && body) {
+      return `${lead}\n\n${body}`;
+    }
+    return lead || body;
+  };
+
   const [title, setTitle] = useState(existingGoldStandard?.title || '');
-  const [lead, setLead] = useState(existingGoldStandard?.lead || '');
-  const [body, setBody] = useState(existingGoldStandard?.body || '');
+  const [body, setBody] = useState(combineLeadAndBody(existingGoldStandard));
   const [corrector, setCorrector] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -288,8 +298,8 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!title && !lead && !body) {
-      setError('Minst ett fält (titel, lead eller body) måste fyllas i');
+    if (!title && !body) {
+      setError('Minst ett fält (titel eller body) måste fyllas i');
       return;
     }
 
@@ -307,7 +317,6 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
           },
           body: JSON.stringify({
             title,
-            lead,
             body,
             metadata: {
               corrector: corrector || undefined,
@@ -376,19 +385,6 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
             onChange={(e) => setTitle(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
             placeholder="Klistra in rättad titel..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Lead / Ingress
-          </label>
-          <textarea
-            value={lead}
-            onChange={(e) => setLead(e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            placeholder="Klistra in rättad ingress..."
           />
         </div>
 

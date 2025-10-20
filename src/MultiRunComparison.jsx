@@ -289,8 +289,16 @@ export default function MultiRunComparison() {
       let text = '';
 
       if (fieldName === 'body') {
+        // Combine lead + body if both exist
+        const lead = v.article?.lead || '';
         const body = v.article?.body;
-        text = Array.isArray(body) ? body.join('\n\n') : (body || '');
+        const bodyText = Array.isArray(body) ? body.join('\n\n') : (body || '');
+
+        if (lead && bodyText) {
+          text = `${lead}\n\n${bodyText}`;
+        } else {
+          text = lead || bodyText;
+        }
       } else {
         text = v.article?.[fieldName] || '';
       }
@@ -401,12 +409,6 @@ export default function MultiRunComparison() {
             <FieldComparison
               label="Titel"
               versions={getFieldVersions('title')}
-              selectedVersionIds={columns}
-            />
-
-            <FieldComparison
-              label="Lead"
-              versions={getFieldVersions('lead')}
               selectedVersionIds={columns}
             />
 

@@ -290,16 +290,24 @@ export default function CorrectionViewer() {
   const originalArticle = correction.original_article || {};
   const correctedArticle = correction.corrected_article || {};
 
-  // Prepare body text
-  const originalBody = Array.isArray(originalArticle.body)
-    ? originalArticle.body.join('\n\n')
-    : (originalArticle.body || '');
+  // Helper to combine lead + body
+  const combineLeadAndBody = (article) => {
+    const lead = article.lead || '';
+    const body = Array.isArray(article.body)
+      ? article.body.join('\n\n')
+      : (article.body || '');
 
-  const correctedBody = Array.isArray(correctedArticle.body)
-    ? correctedArticle.body.join('\n\n')
-    : (correctedArticle.body || '');
+    // If both lead and body exist, combine them with double newline
+    if (lead && body) {
+      return `${lead}\n\n${body}`;
+    }
+    return lead || body;
+  };
 
-  const goldBody = goldStandard?.body || '';
+  // Prepare body text (including lead if present)
+  const originalBody = combineLeadAndBody(originalArticle);
+  const correctedBody = combineLeadAndBody(correctedArticle);
+  const goldBody = goldStandard ? combineLeadAndBody(goldStandard) : '';
 
   return (
     <div className="min-h-screen bg-gray-50">
