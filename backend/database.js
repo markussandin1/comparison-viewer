@@ -233,10 +233,18 @@ function saveCorrection(data) {
         JSON.stringify(originalArticle)
       ]);
     } else {
-      // Update last_updated timestamp
+      // Update title, original_article, and timestamp to keep them in sync with latest run
       db.run(`
-        UPDATE articles SET last_updated = datetime('now') WHERE url = ?
-      `, [articleUrl]);
+        UPDATE articles
+        SET title = ?,
+            original_article = ?,
+            last_updated = datetime('now')
+        WHERE url = ?
+      `, [
+        originalArticle.title || null,
+        JSON.stringify(originalArticle),
+        articleUrl
+      ]);
     }
 
     // Get next run_number for this article
