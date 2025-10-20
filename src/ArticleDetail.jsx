@@ -20,7 +20,7 @@ export default function ArticleDetail() {
   const fetchArticle = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/articles/${decodedUrl}`);
+      const response = await fetch(`${API_URL}/api/articles/${encodeURIComponent(decodedUrl)}`);
       if (!response.ok) throw new Error('Failed to fetch article');
       const data = await response.json();
       setArticle(data);
