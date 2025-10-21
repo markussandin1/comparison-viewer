@@ -552,45 +552,16 @@ function getRunById(runId) {
 }
 
 function saveGoldStandard(url, goldStandard, metadata) {
-  const article = getArticleByUrl(url);
+  // First, check if article exists (without loading full original_article)
+  const articleCheck = db.exec(`SELECT url FROM articles WHERE url = ?`, [url]);
 
-  if (!article) {
+  if (!articleCheck.length || !articleCheck[0].values.length) {
     throw new Error('Article not found. Please create at least one correction run first.');
   }
 
-  // Check for content conflicts
-  const originalArticle = article.original_article;
+  // Skip conflict checking to avoid memory issues with large articles
+  // Conflicts can be checked on frontend if needed
   const conflicts = [];
-
-  if (goldStandard.title !== originalArticle.title) {
-    conflicts.push({
-      field: 'title',
-      original: originalArticle.title,
-      gold: goldStandard.title
-    });
-  }
-
-  if (goldStandard.lead !== originalArticle.lead) {
-    conflicts.push({
-      field: 'lead',
-      original: originalArticle.lead,
-      gold: goldStandard.lead
-    });
-  }
-
-  // For body, compare as string (handle both array and string formats)
-  const originalBody = Array.isArray(originalArticle.body)
-    ? originalArticle.body.join('\n\n')
-    : (originalArticle.body || '');
-  const goldBody = goldStandard.body || '';
-
-  if (goldBody !== originalBody) {
-    conflicts.push({
-      field: 'body',
-      original: originalBody,
-      gold: goldBody
-    });
-  }
 
   db.run(`
     UPDATE articles
@@ -602,9 +573,9 @@ function saveGoldStandard(url, goldStandard, metadata) {
       gold_standard_metadata = ?
     WHERE url = ?
   `, [
-    goldStandard.title,
-    goldStandard.lead,
-    goldStandard.body,
+    goldStandard.title || null,
+    goldStandard.lead || null,
+    goldStandard.body || null,
     JSON.stringify(metadata || {}),
     url
   ]);
