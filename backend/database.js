@@ -462,19 +462,25 @@ function getArticleByUrl(url) {
   return article;
 }
 
-function getArticleWithRuns(url) {
+function getArticleWithRuns(url, page = 1, pageSize = 10) {
   const article = getArticleByUrl(url);
   if (!article) return null;
 
-  // Get all correction runs for this article
+  // Get total run count for pagination
+  const countResult = db.exec(`SELECT COUNT(*) FROM corrections WHERE article_url = ?`, [url]);
+  const totalRuns = countResult[0]?.values[0][0] || 0;
+  const totalPages = Math.ceil(totalRuns / pageSize);
+  const offset = (page - 1) * pageSize;
+
+  // Get all correction runs for this article (without patch arrays for performance)
   const runsResult = db.exec(`
     SELECT
-      id, run_number, original_article, corrected_article,
-      applied, unapplied, created_at
+      id, run_number, original_article, corrected_article, created_at
     FROM corrections
     WHERE article_url = ?
     ORDER BY created_at DESC
-  `, [url]);
+    LIMIT ? OFFSET ?
+  `, [url, pageSize, offset]);
 
   const runs = [];
   if (runsResult.length > 0 && runsResult[0].values.length > 0) {
@@ -484,33 +490,24 @@ function getArticleWithRuns(url) {
         run_number: row[1],
         original_article: JSON.parse(row[2]),
         corrected_article: JSON.parse(row[3]),
-        applied: JSON.parse(row[4]),
-        unapplied: JSON.parse(row[5]),
-        created_at: row[6] + 'Z'
+        created_at: row[4] + 'Z'
       };
 
-      // Calculate metrics if gold standard exists
-      if (article.gold_standard) {
-        run.metrics = metrics.calculateRunMetrics(
-          run,
-          article.gold_standard,
-          article.original_article
-        );
-      }
-
-      // Calculate similarity with previous run
-      if (index < runsResult[0].values.length - 1) {
-        const previousRun = {
-          corrected_article: JSON.parse(runsResult[0].values[index + 1][3])
-        };
-        run.similarity_to_previous = metrics.calculateRunSimilarity(run, previousRun);
-      }
+      // Note: applied/unapplied patches are not loaded here for performance
+      // Use GET /api/runs/:runId to fetch full run details with patches
 
       runs.push(run);
     });
   }
 
   article.runs = runs;
+
+  article.pagination = {
+    totalRuns,
+    totalPages,
+    currentPage: page,
+    pageSize
+  };
 
   // Find recommended run (highest F1 score if gold standard exists)
   if (article.gold_standard && runs.length > 0) {
@@ -524,6 +521,44 @@ function getArticleWithRuns(url) {
   }
 
   return article;
+}
+
+function getRunById(runId) {
+  const runResult = db.exec(`
+    SELECT
+      id, run_number, article_url, original_article, corrected_article,
+      applied, unapplied, created_at
+    FROM corrections
+    WHERE id = ?
+  `, [runId]);
+
+  if (runResult.length === 0 || runResult[0].values.length === 0) {
+    return null;
+  }
+
+  const row = runResult[0].values[0];
+  const run = {
+    id: row[0],
+    run_number: row[1],
+    article_url: row[2],
+    original_article: JSON.parse(row[3]),
+    corrected_article: JSON.parse(row[4]),
+    applied: JSON.parse(row[5]),
+    unapplied: JSON.parse(row[6]),
+    created_at: row[7] + 'Z'
+  };
+
+  // Calculate metrics if gold standard exists for this article
+  const article = getArticleByUrl(run.article_url);
+  if (article && article.gold_standard) {
+    run.metrics = metrics.calculateRunMetrics(
+      run,
+      article.gold_standard,
+      article.original_article
+    );
+  }
+
+  return run;
 }
 
 function saveGoldStandard(url, goldStandard, metadata) {
@@ -598,5 +633,6 @@ module.exports = {
   listArticles,
   getArticleByUrl,
   getArticleWithRuns,
+  getRunById,
   saveGoldStandard
 };

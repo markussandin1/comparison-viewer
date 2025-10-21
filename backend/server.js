@@ -180,12 +180,14 @@ app.get('/api/articles/:url(*)', (req, res) => {
   try {
     // Decode URL parameter (may be URL-encoded from frontend)
     const url = decodeURIComponent(req.params.url);
+    const page = parseInt(req.query.page, 10) || 1;
+    const pageSize = parseInt(req.query.pageSize, 10) || 10;
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
 
-    const article = db.getArticleWithRuns(url);
+    const article = db.getArticleWithRuns(url, page, pageSize);
 
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
@@ -196,6 +198,35 @@ app.get('/api/articles/:url(*)', (req, res) => {
     console.error('Error fetching article:', error);
     res.status(500).json({
       error: 'Failed to fetch article',
+      details: error.message
+    });
+  }
+});
+
+// GET single correction run with full patch details
+app.get('/api/runs/:runId', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
+  try {
+    const runId = parseInt(req.params.runId, 10);
+
+    if (!runId) {
+      return res.status(400).json({ error: 'Run ID is required' });
+    }
+
+    const run = db.getRunById(runId);
+
+    if (!run) {
+      return res.status(404).json({ error: 'Run not found' });
+    }
+
+    res.json(run);
+  } catch (error) {
+    console.error('Error fetching run:', error);
+    res.status(500).json({
+      error: 'Failed to fetch run',
       details: error.message
     });
   }
