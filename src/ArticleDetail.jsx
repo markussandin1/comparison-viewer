@@ -222,14 +222,16 @@ export default function ArticleDetail() {
                             {formatDate(run.created_at)}
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm mb-2">
-                            <span className="text-green-600">
-                              ✓ {run.applied?.length || 0} tillämpade
-                            </span>
-                            <span className="text-red-600">
-                              ✗ {run.unapplied?.length || 0} ej tillämpade
-                            </span>
-                          </div>
+                          {(run.applied || run.unapplied) && (
+                            <div className="flex items-center gap-4 text-sm mb-2">
+                              <span className="text-green-600">
+                                ✓ {run.applied?.length || 0} tillämpade
+                              </span>
+                              <span className="text-red-600">
+                                ✗ {run.unapplied?.length || 0} ej tillämpade
+                              </span>
+                            </div>
+                          )}
 
                           {/* Metrics display */}
                           {hasMetrics && (

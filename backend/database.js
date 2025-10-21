@@ -472,10 +472,10 @@ function getArticleWithRuns(url, page = 1, pageSize = 10) {
   const totalPages = Math.ceil(totalRuns / pageSize);
   const offset = (page - 1) * pageSize;
 
-  // Get all correction runs for this article (without patch arrays for performance)
+  // Get all correction runs for this article (without patch data for performance)
   const runsResult = db.exec(`
     SELECT
-      id, run_number, original_article, corrected_article, applied, unapplied, created_at
+      id, run_number, original_article, corrected_article, created_at
     FROM corrections
     WHERE article_url = ?
     ORDER BY created_at DESC
@@ -485,34 +485,16 @@ function getArticleWithRuns(url, page = 1, pageSize = 10) {
   const runs = [];
   if (runsResult.length > 0 && runsResult[0].values.length > 0) {
     runsResult[0].values.forEach((row, index) => {
-      // Parse patch arrays only to get their length, not to include full data
-      const appliedArray = JSON.parse(row[4]);
-      const unappliedArray = JSON.parse(row[5]);
-
       const run = {
         id: row[0],
         run_number: row[1],
         original_article: JSON.parse(row[2]),
         corrected_article: JSON.parse(row[3]),
-        // Only include array with length for display, not full patch objects
-        applied: appliedArray.length > 0 ? new Array(appliedArray.length).fill(null) : [],
-        unapplied: unappliedArray.length > 0 ? new Array(unappliedArray.length).fill(null) : [],
-        created_at: row[6] + 'Z'
+        created_at: row[4] + 'Z'
       };
 
-      // For metrics calculation, we need the actual patches
-      if (article.gold_standard) {
-        const fullRun = {
-          ...run,
-          applied: appliedArray,
-          unapplied: unappliedArray
-        };
-        run.metrics = metrics.calculateRunMetrics(
-          fullRun,
-          article.gold_standard,
-          article.original_article
-        );
-      }
+      // Note: applied/unapplied not included for performance
+      // Frontend will fetch full run details via /api/runs/:runId when needed
 
       // Calculate similarity with previous run
       if (index < runsResult[0].values.length - 1) {
@@ -535,16 +517,8 @@ function getArticleWithRuns(url, page = 1, pageSize = 10) {
     pageSize
   };
 
-  // Find recommended run (highest F1 score if gold standard exists)
-  if (article.gold_standard && runs.length > 0) {
-    const runsWithMetrics = runs.filter(r => r.metrics);
-    if (runsWithMetrics.length > 0) {
-      const bestRun = runsWithMetrics.reduce((best, current) => {
-        return (current.metrics.overall_f1 > best.metrics.overall_f1) ? current : best;
-      });
-      article.recommended_run_id = bestRun.id;
-    }
-  }
+  // Note: recommended_run_id calculation removed for performance
+  // Can be calculated when fetching individual run details
 
   return article;
 }
