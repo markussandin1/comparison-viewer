@@ -200,6 +200,18 @@ export default function MultiRunComparison() {
       const response = await fetch(`${API_URL}/api/articles/${encodeURIComponent(decodedUrl)}`);
       if (!response.ok) throw new Error('Failed to fetch article');
       const data = await response.json();
+
+      // Fetch full run details for all runs (needed for comparison)
+      if (data.runs && data.runs.length > 0) {
+        const runDetailsPromises = data.runs.map(run =>
+          fetch(`${API_URL}/api/runs/${run.id}`).then(res => res.json())
+        );
+        const fullRuns = await Promise.all(runDetailsPromises);
+
+        // Replace runs array with full details
+        data.runs = fullRuns;
+      }
+
       setArticle(data);
 
       // Set smart defaults
