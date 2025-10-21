@@ -472,10 +472,10 @@ function getArticleWithRuns(url, page = 1, pageSize = 10) {
   const totalPages = Math.ceil(totalRuns / pageSize);
   const offset = (page - 1) * pageSize;
 
-  // Get all correction runs for this article (without patch data for performance)
+  // Get all correction runs for this article (metadata only for performance)
   const runsResult = db.exec(`
     SELECT
-      id, run_number, original_article, corrected_article, created_at
+      id, run_number, created_at
     FROM corrections
     WHERE article_url = ?
     ORDER BY created_at DESC
@@ -484,25 +484,15 @@ function getArticleWithRuns(url, page = 1, pageSize = 10) {
 
   const runs = [];
   if (runsResult.length > 0 && runsResult[0].values.length > 0) {
-    runsResult[0].values.forEach((row, index) => {
+    runsResult[0].values.forEach((row) => {
       const run = {
         id: row[0],
         run_number: row[1],
-        original_article: JSON.parse(row[2]),
-        corrected_article: JSON.parse(row[3]),
-        created_at: row[4] + 'Z'
+        created_at: row[2] + 'Z'
       };
 
-      // Note: applied/unapplied not included for performance
-      // Frontend will fetch full run details via /api/runs/:runId when needed
-
-      // Calculate similarity with previous run
-      if (index < runsResult[0].values.length - 1) {
-        const previousRun = {
-          corrected_article: JSON.parse(runsResult[0].values[index + 1][3])
-        };
-        run.similarity_to_previous = metrics.calculateRunSimilarity(run, previousRun);
-      }
+      // Note: Full run details (original_article, corrected_article, patches)
+      // available via GET /api/runs/:runId
 
       runs.push(run);
     });
