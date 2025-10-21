@@ -455,19 +455,43 @@ export default function CorrectionViewer() {
               <h3 className="font-semibold text-gray-800 mb-3">
                 Tillämpade ändringar ({correction.applied.length})
               </h3>
-              <div className="space-y-2 text-sm">
-                {correction.applied.map((change, i) => (
-                  <div key={i} className="bg-green-50 border border-green-200 rounded p-3">
-                    <div className="font-medium text-green-900">
-                      {change.agent} - {change.path}
-                    </div>
-                    <div className="text-green-700 mt-1">
-                      <span className="line-through">{change.before}</span>
-                      {' → '}
-                      <span className="font-medium">{change.after}</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Agent
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Före
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Efter
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        Fält
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {correction.applied.map((change, i) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          {change.agent}
+                        </td>
+                        <td className="px-4 py-3 text-sm bg-red-50 text-red-800">
+                          {change.before}
+                        </td>
+                        <td className="px-4 py-3 text-sm bg-green-50 text-green-800 font-medium">
+                          {change.after}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                          {change.path}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
