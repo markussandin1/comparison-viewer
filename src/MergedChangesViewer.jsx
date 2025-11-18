@@ -269,7 +269,7 @@ function ChangeItem({ change, index }) {
 }
 
 // Main component
-export default function MergedChangesViewer({ correction }) {
+export default function MergedChangesViewer({ correction, goldStandard }) {
   const { merged_changes, original_article, corrected_article } = correction;
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -317,27 +317,9 @@ export default function MergedChangesViewer({ correction }) {
     );
   }
 
-  // Helper to get text from article object
-  const getArticleText = (article) => {
-    if (!article) return '';
-    if (typeof article === 'string') return article;
-
-    // Combine title, lead, and body if present
-    const parts = [];
-    if (article.title) parts.push(article.title);
-    if (article.lead) parts.push(article.lead);
-    if (article.body) {
-      const bodyText = Array.isArray(article.body)
-        ? article.body.join('\n\n')
-        : article.body;
-      parts.push(bodyText);
-    }
-    return parts.join('\n\n');
-  };
-
-  // Use data directly from JSON - no transformations
-  const originalText = getArticleText(original_article);
-  const correctedText = getArticleText(corrected_article);
+  // Use strings directly - no transformations
+  const originalText = original_article || '';
+  const correctedText = corrected_article || '';
 
   // Compute diff between original and corrected for highlighting
   const diffOperations = useMemo(() => {

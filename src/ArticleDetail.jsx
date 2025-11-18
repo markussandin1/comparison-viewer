@@ -278,37 +278,23 @@ export default function ArticleDetail() {
 
 // Gold Standard Upload Form Component
 function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCancel }) {
-  // Combine lead + body if gold standard has both
-  const combineLeadAndBody = (goldStandard) => {
-    if (!goldStandard) return '';
-    const lead = goldStandard.lead || '';
-    const body = goldStandard.body || '';
-    if (lead && body) {
-      return `${lead}\n\n${body}`;
-    }
-    return lead || body;
-  };
-
-  const [title, setTitle] = useState(existingGoldStandard?.title || '');
-  const [body, setBody] = useState(combineLeadAndBody(existingGoldStandard));
+  const [text, setText] = useState(existingGoldStandard || '');
   const [corrector, setCorrector] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [conflicts, setConflicts] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!title && !body) {
-      setError('Minst ett fält (titel eller body) måste fyllas i');
+    if (!text.trim()) {
+      setError('Text måste fyllas i');
       return;
     }
 
     try {
       setLoading(true);
       setError('');
-      setConflicts([]);
 
       const response = await fetch(
         `${API_URL}/api/articles/${encodeURIComponent(articleUrl)}/gold-standard`,
@@ -318,8 +304,7 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            title,
-            body,
+            text,
             metadata: {
               corrector: corrector || undefined,
               notes: notes || undefined
@@ -333,15 +318,7 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
         throw new Error(data.error || 'Failed to save gold standard');
       }
 
-      const data = await response.json();
-
-      if (data.conflicts && data.conflicts.length > 0) {
-        setConflicts(data.conflicts);
-      }
-
-      setTimeout(() => {
-        onSuccess();
-      }, 2000);
+      onSuccess();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -355,21 +332,6 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
         {existingGoldStandard ? 'Visa/Uppdatera Gold Standard' : 'Ladda upp Gold Standard'}
       </h3>
 
-      {conflicts.length > 0 && (
-        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded p-4">
-          <div className="font-medium text-yellow-800 mb-2">
-            ⚠️ Varning: Innehåll skiljer sig från original
-          </div>
-          <div className="text-sm text-yellow-700 space-y-1">
-            {conflicts.map((conflict, i) => (
-              <div key={i}>
-                <span className="font-medium capitalize">{conflict.field}:</span> Skillnader upptäckta
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded p-4">
           <p className="text-red-800 text-sm">{error}</p>
@@ -379,27 +341,14 @@ function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCance
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Titel
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            placeholder="Klistra in rättad titel..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Body / Brödtext
+            Korrekt text (komplett artikel)
           </label>
           <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={10}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={15}
             className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 font-mono text-sm"
-            placeholder="Klistra in rättad brödtext (separera stycken med dubbla radbrytningar)..."
+            placeholder="Klistra in hela den korrekta artikeln (titel + brödtext)..."
           />
         </div>
 

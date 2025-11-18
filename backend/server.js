@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const db = require('./database');
-const schemaHandler = require('./schemaHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,19 +33,27 @@ app.post('/api/corrections', (req, res) => {
   }
 
   try {
-    const rawData = req.body;
+    const data = req.body;
 
-    // Process incoming data with schema detection
-    const result = schemaHandler.processIncomingData(rawData);
+    // Validate required fields
+    if (!data.article_url || typeof data.article_url !== 'string') {
+      return res.status(400).json({ error: 'article_url is required and must be a string' });
+    }
 
-    if (!result.success) {
-      return res.status(400).json({
-        error: result.error
-      });
+    if (!data.original_article || typeof data.original_article !== 'string') {
+      return res.status(400).json({ error: 'original_article is required and must be a string' });
+    }
+
+    if (!data.corrected_article || typeof data.corrected_article !== 'string') {
+      return res.status(400).json({ error: 'corrected_article is required and must be a string' });
+    }
+
+    if (!data.merged_changes || !Array.isArray(data.merged_changes)) {
+      return res.status(400).json({ error: 'merged_changes is required and must be an array' });
     }
 
     // Save to database
-    const id = db.saveCorrection(result.data);
+    const id = db.saveCorrection(data);
 
     // Get frontend URL from environment or use default
     const frontendUrl = process.env.FRONTEND_URL || 'https://correction-viewer-frontend-qpfdynkt7a-lz.a.run.app';
@@ -56,8 +63,7 @@ app.post('/api/corrections', (req, res) => {
       success: true,
       id,
       url: correctionUrl,
-      schema: result.schema,
-      message: `Correction saved successfully (schema: ${result.schema})`
+      message: 'Correction saved successfully'
     });
   } catch (error) {
     console.error('Error saving correction:', error);
@@ -134,19 +140,14 @@ app.get('/api/corrections/:id/corrected-text', (req, res) => {
       return res.status(404).json({ error: 'Correction not found' });
     }
 
-    // Return just the corrected text for easy consumption by CMS
-    const correctedText = typeof correction.corrected_article.body === 'string'
-      ? correction.corrected_article.body
-      : (Array.isArray(correction.corrected_article.body)
-        ? correction.corrected_article.body.join('\n\n')
-        : '');
+    // Extract title from first line
+    const title = correction.corrected_article.split('\n')[0];
 
     res.json({
       id: correction.id,
-      schema_version: correction.schema_version || 'v1',
-      corrected_text: correctedText,
-      title: correction.corrected_article.title || correction.original_article?.title,
-      changes_count: correction.merged_changes?.length || correction.applied?.length || 0
+      corrected_text: correction.corrected_article,
+      title: title,
+      changes_count: correction.merged_changes?.length || 0
     });
   } catch (error) {
     console.error('Error fetching corrected text:', error);
@@ -182,7 +183,7 @@ app.delete('/api/corrections/:id', (req, res) => {
   }
 });
 
-// ===== NEW ARTICLES ENDPOINTS =====
+// ===== ARTICLES ENDPOINTS =====
 
 // GET all articles (overview)
 app.get('/api/articles', (req, res) => {
@@ -234,7 +235,7 @@ app.get('/api/articles/:url(*)', (req, res) => {
   }
 });
 
-// GET single correction run with full patch details
+// GET single correction run with full details
 app.get('/api/runs/:runId', (req, res) => {
   if (!serverReady) {
     return res.status(503).json({ error: 'Server is initializing' });
@@ -272,25 +273,21 @@ app.post('/api/articles/:url(*)/gold-standard', (req, res) => {
   try {
     // Decode URL parameter (may be URL-encoded from frontend)
     const url = decodeURIComponent(req.params.url);
-    const { title, lead, body, metadata } = req.body;
+    const { text, metadata } = req.body;
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
 
-    if (!title && !body) {
-      return res.status(400).json({
-        error: 'At least one field (title or body) is required'
-      });
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'text is required and must be a string' });
     }
 
-    const goldStandard = { title, lead, body };
-    const result = db.saveGoldStandard(url, goldStandard, metadata);
+    const result = db.saveGoldStandard(url, text, metadata);
 
     res.json({
       success: true,
-      message: 'Gold standard saved successfully',
-      conflicts: result.conflicts
+      message: 'Gold standard saved successfully'
     });
   } catch (error) {
     console.error('Error saving gold standard:', error);

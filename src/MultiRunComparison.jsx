@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// Myers diff algorithm (reused)
+// Myers diff algorithm
 function computeWordDiff(text1, text2) {
   const tokenize = (text) => {
     if (!text) return [];
@@ -128,8 +128,8 @@ function DiffText({ text, operations, mode }) {
   return <div className="text-sm leading-relaxed whitespace-pre-wrap">{text}</div>;
 }
 
-// Single field comparison
-function FieldComparison({ label, versions, selectedVersionIds }) {
+// Text comparison component
+function TextComparison({ versions, selectedVersionIds }) {
   const selectedVersions = selectedVersionIds
     .map(id => versions.find(v => v.id === id))
     .filter(Boolean);
@@ -146,34 +146,31 @@ function FieldComparison({ label, versions, selectedVersionIds }) {
   }
 
   return (
-    <div className="border-b border-gray-200 pb-6 mb-6">
-      <h3 className="font-semibold text-gray-700 mb-3 text-sm">{label}</h3>
-      <div
-        className="grid gap-4"
-        style={{ gridTemplateColumns: `repeat(${selectedVersions.length}, 1fr)` }}
-      >
-        {selectedVersions.map((version, index) => {
-          let displayMode = 'plain';
-          let ops = null;
+    <div
+      className="grid gap-4"
+      style={{ gridTemplateColumns: `repeat(${selectedVersions.length}, 1fr)` }}
+    >
+      {selectedVersions.map((version, index) => {
+        let displayMode = 'plain';
+        let ops = null;
 
-          if (operations && selectedVersions.length === 2) {
-            displayMode = index === 0 ? 'original' : 'modified';
-            ops = operations;
-          }
+        if (operations && selectedVersions.length === 2) {
+          displayMode = index === 0 ? 'original' : 'modified';
+          ops = operations;
+        }
 
-          return (
-            <div key={version.id} className="bg-white p-4 rounded border border-gray-200">
-              <div className="text-xs font-medium mb-2 text-gray-600">
-                {version.label}
-                {version.isRecommended && (
-                  <span className="ml-2 text-green-600">⭐ Recommended</span>
-                )}
-              </div>
-              <DiffText text={version.text} operations={ops} mode={displayMode} />
+        return (
+          <div key={version.id} className="bg-white p-4 rounded border border-gray-200 max-h-[600px] overflow-y-auto">
+            <div className="text-xs font-medium mb-2 text-gray-600">
+              {version.label}
+              {version.isRecommended && (
+                <span className="ml-2 text-green-600">⭐ Recommended</span>
+              )}
             </div>
-          );
-        })}
-      </div>
+            <DiffText text={version.text} operations={ops} mode={displayMode} />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -188,7 +185,7 @@ export default function MultiRunComparison() {
   const [error, setError] = useState('');
 
   // Column selections (array of version IDs)
-  const [columns, setColumns] = useState(['original', 'gold']); // Default 2 columns
+  const [columns, setColumns] = useState(['original', 'gold']);
 
   useEffect(() => {
     fetchArticle();
@@ -201,22 +198,20 @@ export default function MultiRunComparison() {
       if (!response.ok) throw new Error('Failed to fetch article');
       const data = await response.json();
 
-      // Fetch full run details for all runs (needed for comparison)
+      // Fetch full run details for all runs
       if (data.runs && data.runs.length > 0) {
         const runDetailsPromises = data.runs.map(run =>
           fetch(`${API_URL}/api/runs/${run.id}`).then(res => res.json())
         );
         const fullRuns = await Promise.all(runDetailsPromises);
-
-        // Replace runs array with full details
         data.runs = fullRuns;
       }
 
       setArticle(data);
 
       // Set smart defaults
-      if (data.gold_standard && data.recommended_run_id) {
-        setColumns(['gold', `run-${data.recommended_run_id}`]);
+      if (data.gold_standard && data.runs && data.runs.length > 0) {
+        setColumns(['gold', `run-${data.runs[0].id}`]);
       } else if (data.gold_standard) {
         setColumns(['original', 'gold']);
       } else if (data.runs && data.runs.length > 0) {
@@ -241,19 +236,15 @@ export default function MultiRunComparison() {
     versions.push({
       id: 'original',
       label: 'Original',
-      article: article.original_article
+      text: article.original_article || ''
     });
 
     // Gold Standard
     if (article.gold_standard) {
       versions.push({
         id: 'gold',
-        label: '⭐ Gold Standard',
-        article: {
-          title: article.gold_standard.title,
-          lead: article.gold_standard.lead,
-          body: article.gold_standard.body
-        }
+        label: 'Gold Standard',
+        text: article.gold_standard
       });
     }
 
@@ -263,7 +254,7 @@ export default function MultiRunComparison() {
         versions.push({
           id: `run-${run.id}`,
           label: `Run #${run.run_number}`,
-          article: run.corrected_article,
+          text: run.corrected_article || '',
           isRecommended: run.id === article.recommended_run_id,
           metrics: run.metrics
         });
@@ -275,7 +266,6 @@ export default function MultiRunComparison() {
 
   const addColumn = () => {
     if (columns.length < 4) {
-      // Add first available version that's not already selected
       const available = availableVersions.find(v => !columns.includes(v.id));
       if (available) {
         setColumns([...columns, available.id]);
@@ -293,35 +283,6 @@ export default function MultiRunComparison() {
     const newColumns = [...columns];
     newColumns[index] = versionId;
     setColumns(newColumns);
-  };
-
-  // Get versions for field comparison
-  const getFieldVersions = (fieldName) => {
-    return availableVersions.map(v => {
-      let text = '';
-
-      if (fieldName === 'body') {
-        // Combine lead + body if both exist
-        const lead = v.article?.lead || '';
-        const body = v.article?.body;
-        const bodyText = Array.isArray(body) ? body.join('\n\n') : (body || '');
-
-        if (lead && bodyText) {
-          text = `${lead}\n\n${bodyText}`;
-        } else {
-          text = lead || bodyText;
-        }
-      } else {
-        text = v.article?.[fieldName] || '';
-      }
-
-      return {
-        id: v.id,
-        label: v.label,
-        text,
-        isRecommended: v.isRecommended
-      };
-    });
   };
 
   if (loading) {
@@ -347,6 +308,9 @@ export default function MultiRunComparison() {
     );
   }
 
+  // Extract title from first line
+  const title = article.original_article?.split('\n')[0] || article.title;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -362,7 +326,7 @@ export default function MultiRunComparison() {
             Jämför Versioner
           </h1>
           <div className="text-sm text-gray-600 mb-6">
-            {article.title || decodedUrl}
+            {title || decodedUrl}
           </div>
 
           {/* Column Selectors */}
@@ -416,22 +380,13 @@ export default function MultiRunComparison() {
             </div>
           </div>
 
-          {/* Content Comparison */}
-          <div className="space-y-6">
-            <FieldComparison
-              label="Titel"
-              versions={getFieldVersions('title')}
-              selectedVersionIds={columns}
-            />
+          {/* Text Comparison */}
+          <TextComparison
+            versions={availableVersions}
+            selectedVersionIds={columns}
+          />
 
-            <FieldComparison
-              label="Body"
-              versions={getFieldVersions('body')}
-              selectedVersionIds={columns}
-            />
-          </div>
-
-          {/* Metrics Summary (if comparing with gold) */}
+          {/* Metrics Summary */}
           {columns.includes('gold') && article.runs && (
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h3 className="font-semibold text-gray-800 mb-4">Metrics Summary</h3>

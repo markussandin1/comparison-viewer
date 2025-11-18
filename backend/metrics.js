@@ -124,127 +124,36 @@ function calculateF1Score(original, corrected, gold) {
 }
 
 // Calculate metrics for a correction run against gold standard
+// All inputs are plain text strings
 function calculateRunMetrics(run, goldStandard, originalArticle) {
   if (!goldStandard) return null;
 
-  const metrics = {
-    overall_similarity: 0,
-    title: null,
-    lead: null,
-    body: null
+  const correctedText = run.corrected_article;
+
+  // Calculate similarity
+  const similarity = similarityRatio(correctedText, goldStandard);
+
+  // Calculate F1 score
+  const f1Metrics = calculateF1Score(originalArticle, correctedText, goldStandard);
+
+  return {
+    similarity: Math.round(similarity * 100) / 100,
+    edit_distance: levenshteinDistance(correctedText, goldStandard),
+    ...f1Metrics,
+    // Keep these for backwards compatibility with frontend
+    overall_similarity: Math.round(similarity * 100) / 100,
+    overall_f1: f1Metrics.f1
   };
-
-  let totalSimilarity = 0;
-  let fieldCount = 0;
-
-  // Title metrics
-  if (goldStandard.title) {
-    const originalTitle = originalArticle.title || '';
-    const correctedTitle = run.corrected_article.title || '';
-
-    metrics.title = {
-      similarity: similarityRatio(correctedTitle, goldStandard.title),
-      edit_distance: levenshteinDistance(correctedTitle, goldStandard.title),
-      ...calculateF1Score(originalTitle, correctedTitle, goldStandard.title)
-    };
-
-    totalSimilarity += metrics.title.similarity;
-    fieldCount++;
-  }
-
-  // Lead metrics
-  if (goldStandard.lead) {
-    const originalLead = originalArticle.lead || '';
-    const correctedLead = run.corrected_article.lead || '';
-
-    metrics.lead = {
-      similarity: similarityRatio(correctedLead, goldStandard.lead),
-      edit_distance: levenshteinDistance(correctedLead, goldStandard.lead),
-      ...calculateF1Score(originalLead, correctedLead, goldStandard.lead)
-    };
-
-    totalSimilarity += metrics.lead.similarity;
-    fieldCount++;
-  }
-
-  // Body metrics
-  if (goldStandard.body) {
-    const originalBody = Array.isArray(originalArticle.body)
-      ? originalArticle.body.join('\n\n')
-      : (originalArticle.body || '');
-
-    const correctedBody = Array.isArray(run.corrected_article.body)
-      ? run.corrected_article.body.join('\n\n')
-      : (run.corrected_article.body || '');
-
-    metrics.body = {
-      similarity: similarityRatio(correctedBody, goldStandard.body),
-      edit_distance: levenshteinDistance(correctedBody, goldStandard.body),
-      ...calculateF1Score(originalBody, correctedBody, goldStandard.body)
-    };
-
-    totalSimilarity += metrics.body.similarity;
-    fieldCount++;
-  }
-
-  // Overall similarity (average across fields)
-  metrics.overall_similarity = fieldCount > 0
-    ? Math.round((totalSimilarity / fieldCount) * 100) / 100
-    : 0;
-
-  // Overall F1 score (weighted average)
-  const f1Scores = [
-    metrics.title?.f1,
-    metrics.lead?.f1,
-    metrics.body?.f1
-  ].filter(f1 => f1 !== null && f1 !== undefined);
-
-  metrics.overall_f1 = f1Scores.length > 0
-    ? Math.round((f1Scores.reduce((sum, f1) => sum + f1, 0) / f1Scores.length) * 100) / 100
-    : 0;
-
-  return metrics;
 }
 
 // Calculate similarity between two runs
 function calculateRunSimilarity(run1, run2) {
-  const similarities = [];
+  const similarity = similarityRatio(
+    run1.corrected_article,
+    run2.corrected_article
+  );
 
-  // Compare titles
-  if (run1.corrected_article.title && run2.corrected_article.title) {
-    similarities.push(similarityRatio(
-      run1.corrected_article.title,
-      run2.corrected_article.title
-    ));
-  }
-
-  // Compare leads
-  if (run1.corrected_article.lead && run2.corrected_article.lead) {
-    similarities.push(similarityRatio(
-      run1.corrected_article.lead,
-      run2.corrected_article.lead
-    ));
-  }
-
-  // Compare bodies
-  const body1 = Array.isArray(run1.corrected_article.body)
-    ? run1.corrected_article.body.join('\n\n')
-    : (run1.corrected_article.body || '');
-
-  const body2 = Array.isArray(run2.corrected_article.body)
-    ? run2.corrected_article.body.join('\n\n')
-    : (run2.corrected_article.body || '');
-
-  if (body1 && body2) {
-    similarities.push(similarityRatio(body1, body2));
-  }
-
-  // Average similarity
-  const avgSimilarity = similarities.length > 0
-    ? similarities.reduce((sum, s) => sum + s, 0) / similarities.length
-    : 0;
-
-  return Math.round(avgSimilarity * 100) / 100;
+  return Math.round(similarity * 100) / 100;
 }
 
 module.exports = {
