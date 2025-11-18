@@ -36,8 +36,14 @@ app.post('/api/corrections', (req, res) => {
     const data = req.body;
 
     // Validate required fields
-    if (!data.article_url || typeof data.article_url !== 'string') {
-      return res.status(400).json({ error: 'article_url is required and must be a string' });
+    // article_url is optional - if not provided, generate one
+    if (data.article_url && typeof data.article_url !== 'string') {
+      return res.status(400).json({ error: 'article_url must be a string if provided' });
+    }
+
+    // Generate article_url if not provided
+    if (!data.article_url) {
+      data.article_url = `generated-${Date.now()}`;
     }
 
     if (!data.original_article || typeof data.original_article !== 'string') {
