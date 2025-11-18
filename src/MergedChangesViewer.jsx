@@ -5,6 +5,139 @@ import React, { useState, useMemo } from 'react';
  * Shows original and corrected text directly from JSON data
  */
 
+// Myers diff algorithm for computing word-level diffs
+function computeWordDiff(text1, text2) {
+  const tokenize = (text) => {
+    if (!text) return [];
+    return text.split(/(\s+|[.,!?;:"()–—\-\[\]{}])/).filter(token => token.length > 0);
+  };
+
+  const tokens1 = tokenize(text1);
+  const tokens2 = tokenize(text2);
+
+  return myersDiff(tokens1, tokens2);
+}
+
+function myersDiff(a, b) {
+  const N = a.length;
+  const M = b.length;
+  const MAX = N + M;
+  const v = {};
+  const trace = [];
+
+  v[1] = 0;
+
+  for (let d = 0; d <= MAX; d++) {
+    trace.push({ ...v });
+
+    for (let k = -d; k <= d; k += 2) {
+      let x;
+      if (k === -d || (k !== d && v[k - 1] < v[k + 1])) {
+        x = v[k + 1];
+      } else {
+        x = v[k - 1] + 1;
+      }
+
+      let y = x - k;
+
+      while (x < N && y < M && a[x] === b[y]) {
+        x++;
+        y++;
+      }
+
+      v[k] = x;
+
+      if (x >= N && y >= M) {
+        return buildPath(a, b, trace, d);
+      }
+    }
+  }
+
+  return [];
+}
+
+function buildPath(a, b, trace, d) {
+  const operations = [];
+  let x = a.length;
+  let y = b.length;
+
+  for (let D = d; D >= 0; D--) {
+    const v = trace[D];
+    const k = x - y;
+
+    let prevK;
+    if (k === -D || (k !== D && v[k - 1] < v[k + 1])) {
+      prevK = k + 1;
+    } else {
+      prevK = k - 1;
+    }
+
+    const prevX = v[prevK];
+    const prevY = prevX - prevK;
+
+    while (x > prevX && y > prevY) {
+      operations.unshift({ type: 'equal', text: a[x - 1] });
+      x--;
+      y--;
+    }
+
+    if (D > 0) {
+      if (x > prevX) {
+        operations.unshift({ type: 'delete', text: a[x - 1] });
+        x--;
+      } else {
+        operations.unshift({ type: 'insert', text: b[y - 1] });
+        y--;
+      }
+    }
+  }
+
+  return operations;
+}
+
+// Render diff operations
+function DiffDisplay({ operations, mode }) {
+  if (mode === 'original') {
+    // Show deletions (what was removed from original)
+    return (
+      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+        {operations.map((op, index) => {
+          if (op.type === 'equal' || op.type === 'delete') {
+            return (
+              <span
+                key={index}
+                className={op.type === 'delete' ? 'bg-red-100 text-red-800 line-through' : ''}
+              >
+                {op.text}
+              </span>
+            );
+          }
+          return null;
+        })}
+      </div>
+    );
+  } else {
+    // Show insertions (what was added in corrected)
+    return (
+      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+        {operations.map((op, index) => {
+          if (op.type === 'equal' || op.type === 'insert') {
+            return (
+              <span
+                key={index}
+                className={op.type === 'insert' ? 'bg-green-100 text-green-800' : ''}
+              >
+                {op.text}
+              </span>
+            );
+          }
+          return null;
+        })}
+      </div>
+    );
+  }
+}
+
 // Component to display a single change
 function ChangeItem({ change, index }) {
   const [expanded, setExpanded] = useState(false);
@@ -206,6 +339,11 @@ export default function MergedChangesViewer({ correction }) {
   const originalText = getArticleText(original_article);
   const correctedText = getArticleText(corrected_article);
 
+  // Compute diff between original and corrected for highlighting
+  const diffOperations = useMemo(() => {
+    return computeWordDiff(originalText, correctedText);
+  }, [originalText, correctedText]);
+
   return (
     <div className="space-y-6">
       {/* Statistics */}
@@ -287,8 +425,8 @@ export default function MergedChangesViewer({ correction }) {
               <h4 className="font-semibold text-red-900 text-sm">Original</h4>
             </div>
             <div className="p-4 bg-white max-h-96 overflow-y-auto">
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-                {originalText}
+              <div className="prose prose-sm max-w-none">
+                <DiffDisplay operations={diffOperations} mode="original" />
               </div>
             </div>
           </div>
@@ -299,8 +437,8 @@ export default function MergedChangesViewer({ correction }) {
               <h4 className="font-semibold text-green-900 text-sm">Korrigerad</h4>
             </div>
             <div className="p-4 bg-white max-h-96 overflow-y-auto">
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-                {correctedText}
+              <div className="prose prose-sm max-w-none">
+                <DiffDisplay operations={diffOperations} mode="corrected" />
               </div>
             </div>
           </div>
