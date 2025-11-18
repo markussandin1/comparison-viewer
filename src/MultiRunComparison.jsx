@@ -163,9 +163,6 @@ function TextComparison({ versions, selectedVersionIds }) {
           <div key={version.id} className="bg-white p-4 rounded border border-gray-200 max-h-[600px] overflow-y-auto">
             <div className="text-xs font-medium mb-2 text-gray-600">
               {version.label}
-              {version.isRecommended && (
-                <span className="ml-2 text-green-600">⭐ Recommended</span>
-              )}
             </div>
             <DiffText text={version.text} operations={ops} mode={displayMode} />
           </div>
@@ -210,11 +207,7 @@ export default function MultiRunComparison() {
       setArticle(data);
 
       // Set smart defaults
-      if (data.gold_standard && data.runs && data.runs.length > 0) {
-        setColumns(['gold', `run-${data.runs[0].id}`]);
-      } else if (data.gold_standard) {
-        setColumns(['original', 'gold']);
-      } else if (data.runs && data.runs.length > 0) {
+      if (data.runs && data.runs.length > 0) {
         setColumns(['original', `run-${data.runs[0].id}`]);
       }
 
@@ -239,24 +232,13 @@ export default function MultiRunComparison() {
       text: article.original_article || ''
     });
 
-    // Gold Standard
-    if (article.gold_standard) {
-      versions.push({
-        id: 'gold',
-        label: 'Gold Standard',
-        text: article.gold_standard
-      });
-    }
-
     // Runs
     if (article.runs) {
       article.runs.forEach(run => {
         versions.push({
           id: `run-${run.id}`,
           label: `Run #${run.run_number}`,
-          text: run.corrected_article || '',
-          isRecommended: run.id === article.recommended_run_id,
-          metrics: run.metrics
+          text: run.corrected_article || ''
         });
       });
     }
@@ -361,8 +343,6 @@ export default function MultiRunComparison() {
                     {availableVersions.map(v => (
                       <option key={v.id} value={v.id}>
                         {v.label}
-                        {v.isRecommended ? ' ⭐' : ''}
-                        {v.metrics ? ` (F1: ${Math.round(v.metrics.overall_f1 * 100)}%)` : ''}
                       </option>
                     ))}
                   </select>
@@ -385,29 +365,6 @@ export default function MultiRunComparison() {
             versions={availableVersions}
             selectedVersionIds={columns}
           />
-
-          {/* Metrics Summary */}
-          {columns.includes('gold') && article.runs && (
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="font-semibold text-gray-800 mb-4">Metrics Summary</h3>
-              <div className="grid grid-cols-3 gap-4">
-                {article.runs
-                  .filter(run => columns.includes(`run-${run.id}`) && run.metrics)
-                  .map(run => (
-                    <div key={run.id} className="bg-blue-50 border border-blue-200 rounded p-4">
-                      <div className="text-sm font-medium text-blue-900 mb-2">
-                        Run #{run.run_number}
-                        {run.id === article.recommended_run_id && ' ⭐'}
-                      </div>
-                      <div className="text-xs text-blue-700 space-y-1">
-                        <div>F1 Score: <span className="font-bold">{Math.round(run.metrics.overall_f1 * 100)}%</span></div>
-                        <div>Similarity: {Math.round(run.metrics.overall_similarity * 100)}%</div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

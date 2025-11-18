@@ -8,7 +8,6 @@ export default function ArticlesList() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filterGoldStandard, setFilterGoldStandard] = useState('all'); // 'all', 'with', 'without'
   const [sortBy, setSortBy] = useState('latest'); // 'latest', 'oldest', 'most_runs'
 
   useEffect(() => {
@@ -50,23 +49,17 @@ export default function ArticlesList() {
     }
   };
 
-  // Filter and sort articles
-  const filteredAndSortedArticles = articles
-    .filter(article => {
-      if (filterGoldStandard === 'with') return article.has_gold_standard;
-      if (filterGoldStandard === 'without') return !article.has_gold_standard;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'latest') {
-        return new Date(b.last_updated) - new Date(a.last_updated);
-      } else if (sortBy === 'oldest') {
-        return new Date(a.first_seen) - new Date(b.first_seen);
-      } else if (sortBy === 'most_runs') {
-        return b.run_count - a.run_count;
-      }
-      return 0;
-    });
+  // Sort articles
+  const sortedArticles = [...articles].sort((a, b) => {
+    if (sortBy === 'latest') {
+      return new Date(b.last_updated) - new Date(a.last_updated);
+    } else if (sortBy === 'oldest') {
+      return new Date(a.first_seen) - new Date(b.first_seen);
+    } else if (sortBy === 'most_runs') {
+      return b.run_count - a.run_count;
+    }
+    return 0;
+  });
 
   if (loading) {
     return (
@@ -95,19 +88,6 @@ export default function ArticlesList() {
         <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Gold Standard:</label>
-              <select
-                value={filterGoldStandard}
-                onChange={(e) => setFilterGoldStandard(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Alla</option>
-                <option value="with">Med gold standard</option>
-                <option value="without">Utan gold standard</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Sortera:</label>
               <select
                 value={sortBy}
@@ -121,7 +101,7 @@ export default function ArticlesList() {
             </div>
 
             <div className="ml-auto text-sm text-gray-600">
-              {filteredAndSortedArticles.length} av {articles.length} artiklar
+              {articles.length} artiklar
             </div>
           </div>
         </div>
@@ -135,25 +115,16 @@ export default function ArticlesList() {
 {`curl -X POST http://localhost:3001/api/corrections \\
   -H "Content-Type: application/json" \\
   -d '{
-    "original_article": {
-      "url": "https://example.com/artikel",
-      "title": "...",
-      "lead": "...",
-      "body": ["..."]
-    },
-    ...
+    "article_url": "https://example.com/artikel",
+    "original_article": "Titel\\n\\nBrödtext...",
+    "corrected_article": "Rättad titel\\n\\nRättad brödtext...",
+    "merged_changes": []
   }'`}
             </pre>
           </div>
-        ) : filteredAndSortedArticles.length === 0 ? (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-            <p className="text-gray-600">
-              Inga artiklar matchar de valda filtren.
-            </p>
-          </div>
         ) : (
           <div className="space-y-4">
-            {filteredAndSortedArticles.map(article => (
+            {sortedArticles.map(article => (
               <div
                 key={article.url}
                 onClick={() => navigate(`/article/${encodeURIComponent(article.url)}`)}
@@ -161,16 +132,9 @@ export default function ArticlesList() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        {article.title || 'Ingen titel'}
-                      </h2>
-                      {article.has_gold_standard && (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                          ⭐ Gold Standard
-                        </span>
-                      )}
-                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                      {article.title || 'Ingen titel'}
+                    </h2>
 
                     <div className="text-sm text-blue-600 mb-3 truncate">
                       {extractDomain(article.url)}

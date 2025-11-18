@@ -264,40 +264,6 @@ app.get('/api/runs/:runId', (req, res) => {
   }
 });
 
-// POST gold standard for an article
-app.post('/api/articles/:url(*)/gold-standard', (req, res) => {
-  if (!serverReady) {
-    return res.status(503).json({ error: 'Server is initializing' });
-  }
-
-  try {
-    // Decode URL parameter (may be URL-encoded from frontend)
-    const url = decodeURIComponent(req.params.url);
-    const { text, metadata } = req.body;
-
-    if (!url) {
-      return res.status(400).json({ error: 'URL is required' });
-    }
-
-    if (!text || typeof text !== 'string') {
-      return res.status(400).json({ error: 'text is required and must be a string' });
-    }
-
-    const result = db.saveGoldStandard(url, text, metadata);
-
-    res.json({
-      success: true,
-      message: 'Gold standard saved successfully'
-    });
-  } catch (error) {
-    console.error('Error saving gold standard:', error);
-    res.status(500).json({
-      error: 'Failed to save gold standard',
-      details: error.message
-    });
-  }
-});
-
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -11,7 +11,6 @@ export default function ArticleDetail() {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showGoldStandardForm, setShowGoldStandardForm] = useState(false);
 
   useEffect(() => {
     fetchArticle();
@@ -89,11 +88,6 @@ export default function ArticleDetail() {
                 {decodedUrl}
               </div>
             </div>
-            {article.gold_standard && (
-              <span className="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-yellow-100 text-yellow-800">
-                ⭐ Gold Standard
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-6 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
@@ -106,61 +100,6 @@ export default function ArticleDetail() {
             <div>
               Antal körningar: <span className="font-semibold">{article.runs?.length || 0}</span>
             </div>
-          </div>
-
-          {/* Gold Standard Section */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-gray-800">Gold Standard</h2>
-              {!article.gold_standard && (
-                <button
-                  onClick={() => setShowGoldStandardForm(!showGoldStandardForm)}
-                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors text-sm font-medium"
-                >
-                  + Ladda upp Gold Standard
-                </button>
-              )}
-            </div>
-
-            {article.gold_standard ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="mb-2 text-sm text-gray-600">
-                  Uppladdad: {formatDate(article.gold_standard_uploaded_at)}
-                  {article.gold_standard_metadata?.corrector && (
-                    <span className="ml-2">
-                      av {article.gold_standard_metadata.corrector}
-                    </span>
-                  )}
-                </div>
-                {article.gold_standard_metadata?.notes && (
-                  <div className="text-sm text-gray-600 mb-3">
-                    Kommentar: {article.gold_standard_metadata.notes}
-                  </div>
-                )}
-                <button
-                  onClick={() => setShowGoldStandardForm(!showGoldStandardForm)}
-                  className="text-sm text-yellow-700 hover:text-yellow-900"
-                >
-                  {showGoldStandardForm ? 'Dölj innehåll' : 'Visa innehåll →'}
-                </button>
-              </div>
-            ) : (
-              <div className="text-sm text-gray-500">
-                Ingen gold standard uppladdad än.
-              </div>
-            )}
-
-            {showGoldStandardForm && (
-              <GoldStandardForm
-                articleUrl={decodedUrl}
-                existingGoldStandard={article.gold_standard}
-                onSuccess={() => {
-                  setShowGoldStandardForm(false);
-                  fetchArticle();
-                }}
-                onCancel={() => setShowGoldStandardForm(false)}
-              />
-            )}
           </div>
 
           {/* Runs Section */}
@@ -181,88 +120,41 @@ export default function ArticleDetail() {
 
             {article.runs && article.runs.length > 0 ? (
               <div className="space-y-3">
-                {article.runs.map((run) => {
-                  const isRecommended = article.recommended_run_id === run.id;
-                  const hasMetrics = run.metrics && article.gold_standard;
-
-                  return (
-                    <div
-                      key={run.id}
-                      onClick={() => navigate(`/correction/${run.id}`)}
-                      className={`border rounded-lg p-4 hover:bg-blue-50 transition-all cursor-pointer ${
-                        isRecommended
-                          ? 'border-2 border-green-500 bg-green-50 hover:bg-green-100'
-                          : 'border-gray-200 hover:border-blue-400'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="font-semibold text-gray-900">
-                              Run #{run.run_number}
+                {article.runs.map((run) => (
+                  <div
+                    key={run.id}
+                    onClick={() => navigate(`/correction/${run.id}`)}
+                    className="border rounded-lg p-4 hover:bg-blue-50 transition-all cursor-pointer border-gray-200 hover:border-blue-400"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-semibold text-gray-900">
+                            Run #{run.run_number}
+                          </span>
+                          {run.run_number === 1 && (
+                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                              Första
                             </span>
-                            {isRecommended && (
-                              <span className="text-xs px-2 py-1 bg-green-600 text-white rounded font-medium">
-                                ⭐ Recommended
-                              </span>
-                            )}
-                            {run.run_number === 1 && (
-                              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                                Första
-                              </span>
-                            )}
-                            {run.run_number === article.runs[0].run_number && run.run_number > 1 && (
-                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                                Senaste
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-sm text-gray-600 mb-3">
-                            {formatDate(run.created_at)}
-                          </div>
-
-                          {(run.applied || run.unapplied) && (
-                            <div className="flex items-center gap-4 text-sm mb-2">
-                              <span className="text-green-600">
-                                ✓ {run.applied?.length || 0} tillämpade
-                              </span>
-                              <span className="text-red-600">
-                                ✗ {run.unapplied?.length || 0} ej tillämpade
-                              </span>
-                            </div>
                           )}
-
-                          {/* Metrics display */}
-                          {hasMetrics && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <div className="flex items-center gap-6 text-sm">
-                                <div>
-                                  <span className="text-gray-600">vs Gold Standard:</span>
-                                  <span className="ml-2 font-semibold text-blue-600">
-                                    F1: {Math.round(run.metrics.overall_f1 * 100)}%
-                                  </span>
-                                  <span className="ml-2 text-gray-500">
-                                    Similarity: {Math.round(run.metrics.overall_similarity * 100)}%
-                                  </span>
-                                </div>
-                                {run.similarity_to_previous !== undefined && (
-                                  <div className="text-gray-500">
-                                    vs Previous: {Math.round(run.similarity_to_previous * 100)}%
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                          {run.run_number === article.runs[0].run_number && run.run_number > 1 && (
+                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                              Senaste
+                            </span>
                           )}
                         </div>
 
-                        <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium">
-                          Visa →
-                        </button>
+                        <div className="text-sm text-gray-600">
+                          {formatDate(run.created_at)}
+                        </div>
                       </div>
+
+                      <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        Visa →
+                      </button>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-sm text-gray-500">
@@ -272,133 +164,6 @@ export default function ArticleDetail() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Gold Standard Upload Form Component
-function GoldStandardForm({ articleUrl, existingGoldStandard, onSuccess, onCancel }) {
-  const [text, setText] = useState(existingGoldStandard || '');
-  const [corrector, setCorrector] = useState('');
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!text.trim()) {
-      setError('Text måste fyllas i');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError('');
-
-      const response = await fetch(
-        `${API_URL}/api/articles/${encodeURIComponent(articleUrl)}/gold-standard`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            text,
-            metadata: {
-              corrector: corrector || undefined,
-              notes: notes || undefined
-            }
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to save gold standard');
-      }
-
-      onSuccess();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-6">
-      <h3 className="text-md font-semibold text-gray-800 mb-4">
-        {existingGoldStandard ? 'Visa/Uppdatera Gold Standard' : 'Ladda upp Gold Standard'}
-      </h3>
-
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded p-4">
-          <p className="text-red-800 text-sm">{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Korrekt text (komplett artikel)
-          </label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={15}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 font-mono text-sm"
-            placeholder="Klistra in hela den korrekta artikeln (titel + brödtext)..."
-          />
-        </div>
-
-        <div className="border-t border-gray-200 pt-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Metadata (valfritt)</h4>
-
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Rättad av
-            </label>
-            <input
-              type="text"
-              value={corrector}
-              onChange={(e) => setCorrector(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              placeholder="t.ex. Anna Svensson"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Anteckningar
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              placeholder="t.ex. Fokus på kommaregler"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors font-medium disabled:opacity-50"
-          >
-            {loading ? 'Sparar...' : 'Spara Gold Standard'}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
-          >
-            Avbryt
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

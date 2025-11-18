@@ -269,7 +269,7 @@ function ChangeItem({ change, index }) {
 }
 
 // Main component
-export default function MergedChangesViewer({ correction, goldStandard }) {
+export default function MergedChangesViewer({ correction }) {
   const { merged_changes, original_article, corrected_article } = correction;
 
   const [filterStatus, setFilterStatus] = useState('all');

@@ -8,8 +8,6 @@ export default function CorrectionViewer() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [correction, setCorrection] = useState(null);
-  const [goldStandard, setGoldStandard] = useState(null);
-  const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -28,29 +26,6 @@ export default function CorrectionViewer() {
       if (!response.ok) throw new Error('Failed to fetch correction');
       const data = await response.json();
       setCorrection(data);
-
-      // Try to fetch gold standard and metrics if article URL exists
-      if (data.article_url) {
-        const articleResponse = await fetch(
-          `${API_URL}/api/articles/${encodeURIComponent(data.article_url)}`
-        );
-
-        if (articleResponse.ok) {
-          const articleData = await articleResponse.json();
-          if (articleData.gold_standard) {
-            setGoldStandard(articleData.gold_standard);
-          }
-        }
-
-        // Fetch run details with metrics
-        const runResponse = await fetch(`${API_URL}/api/runs/${correctionId}`);
-        if (runResponse.ok) {
-          const runData = await runResponse.json();
-          if (runData.metrics) {
-            setMetrics(runData.metrics);
-          }
-        }
-      }
     } catch (err) {
       setError(`Error loading correction: ${err.message}`);
     } finally {
@@ -107,39 +82,9 @@ export default function CorrectionViewer() {
             </div>
           )}
 
-          {/* Metrics Display */}
-          {metrics && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="text-sm font-semibold text-blue-900 mb-3">
-                Metrics vs Gold Standard
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <div className="text-blue-700 font-medium">F1 Score</div>
-                  <div className="text-2xl font-bold text-blue-900">
-                    {Math.round(metrics.overall_f1 * 100)}%
-                  </div>
-                </div>
-                <div>
-                  <div className="text-blue-700 font-medium">Similarity</div>
-                  <div className="text-2xl font-bold text-blue-900">
-                    {Math.round(metrics.overall_similarity * 100)}%
-                  </div>
-                </div>
-                <div>
-                  <div className="text-blue-700 font-medium">Precision / Recall</div>
-                  <div className="text-lg font-semibold text-blue-900">
-                    {Math.round((metrics.precision || 0) * 100)}% / {Math.round((metrics.recall || 0) * 100)}%
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Content Comparison */}
           <MergedChangesViewer
             correction={correction}
-            goldStandard={goldStandard}
           />
         </div>
       </div>

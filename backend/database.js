@@ -1,7 +1,6 @@
 const initSqlJs = require('sql.js');
 const fs = require('fs');
 const path = require('path');
-const metrics = require('./metrics');
 
 // Use /app/data for persistent storage in Docker, otherwise use local directory
 const dbDir = process.env.NODE_ENV === 'production' ? '/app/data' : __dirname;
@@ -27,9 +26,6 @@ async function initDatabase() {
       url TEXT PRIMARY KEY,
       title TEXT,
       original_article TEXT NOT NULL,
-      gold_standard TEXT,
-      gold_standard_uploaded_at DATETIME,
-      gold_standard_metadata TEXT,
       first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -194,7 +190,6 @@ function listArticles() {
     SELECT
       a.url,
       a.title,
-      a.gold_standard IS NOT NULL as has_gold_standard,
       a.first_seen,
       a.last_updated,
       COUNT(c.id) as run_count,
@@ -212,18 +207,17 @@ function listArticles() {
   return result[0].values.map(row => ({
     url: row[0],
     title: row[1],
-    has_gold_standard: Boolean(row[2]),
-    first_seen: row[3] + 'Z',
-    last_updated: row[4] + 'Z',
-    run_count: row[5] || 0,
-    latest_run_at: row[6] ? row[6] + 'Z' : null
+    first_seen: row[2] + 'Z',
+    last_updated: row[3] + 'Z',
+    run_count: row[4] || 0,
+    latest_run_at: row[5] ? row[5] + 'Z' : null
   }));
 }
 
 // Get article by URL
 function getArticleByUrl(url) {
   const result = db.exec(`
-    SELECT url, title, original_article, gold_standard, gold_standard_uploaded_at, gold_standard_metadata, first_seen, last_updated
+    SELECT url, title, original_article, first_seen, last_updated
     FROM articles WHERE url = ?
   `, [url]);
 
@@ -233,26 +227,13 @@ function getArticleByUrl(url) {
 
   const row = result[0].values[0];
 
-  const article = {
+  return {
     url: row[0],
     title: row[1],
     original_article: row[2],
-    gold_standard: row[3],
-    gold_standard_uploaded_at: row[4] ? row[4] + 'Z' : null,
-    gold_standard_metadata: null,
-    first_seen: row[6] + 'Z',
-    last_updated: row[7] + 'Z'
+    first_seen: row[3] + 'Z',
+    last_updated: row[4] + 'Z'
   };
-
-  if (row[5]) {
-    try {
-      article.gold_standard_metadata = JSON.parse(row[5]);
-    } catch (e) {
-      // Keep as null if parse fails
-    }
-  }
-
-  return article;
 }
 
 // Get article with all runs
@@ -310,7 +291,7 @@ function getRunById(runId) {
   }
 
   const row = runResult[0].values[0];
-  const run = {
+  return {
     id: row[0],
     run_number: row[1],
     article_url: row[2],
@@ -319,45 +300,6 @@ function getRunById(runId) {
     merged_changes: row[5] ? JSON.parse(row[5]) : [],
     created_at: row[6] + 'Z'
   };
-
-  // Calculate metrics if gold standard exists
-  const article = getArticleByUrl(run.article_url);
-  if (article && article.gold_standard) {
-    run.metrics = metrics.calculateRunMetrics(
-      run,
-      article.gold_standard,
-      article.original_article
-    );
-  }
-
-  return run;
-}
-
-// Save gold standard for an article
-function saveGoldStandard(url, goldStandardText, metadata) {
-  // Check if article exists
-  const articleCheck = db.exec(`SELECT url FROM articles WHERE url = ?`, [url]);
-
-  if (!articleCheck.length || !articleCheck[0].values.length) {
-    throw new Error('Article not found. Please create at least one correction run first.');
-  }
-
-  db.run(`
-    UPDATE articles
-    SET
-      gold_standard = ?,
-      gold_standard_uploaded_at = datetime('now'),
-      gold_standard_metadata = ?
-    WHERE url = ?
-  `, [
-    goldStandardText,
-    JSON.stringify(metadata || {}),
-    url
-  ]);
-
-  saveDatabase();
-
-  return { success: true };
 }
 
 module.exports = {
@@ -369,6 +311,5 @@ module.exports = {
   listArticles,
   getArticleByUrl,
   getArticleWithRuns,
-  getRunById,
-  saveGoldStandard
+  getRunById
 };
