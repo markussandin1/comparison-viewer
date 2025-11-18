@@ -37,11 +37,16 @@ function extractUrlV1(data) {
 
 /**
  * Extract URL from v2 schema
- * For v2, we'll use document_id as the URL identifier
+ * Uses article_url if provided, otherwise generates from document_id
  * @param {Object} data - Data in v2 format
  * @returns {string} - Article URL
  */
 function extractUrlV2(data) {
+  // Use article_url if provided
+  if (data.article_url) {
+    return data.article_url;
+  }
+  // Fallback to document_id
   const documentId = data.document_id || 'unknown';
   return `merged-changes://${documentId}`;
 }
