@@ -49,6 +49,8 @@ async function initDatabase() {
       corrected_article TEXT NOT NULL,
       applied TEXT,
       unapplied TEXT,
+      schema_version TEXT DEFAULT 'v1',
+      merged_changes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -178,6 +180,20 @@ async function runMigrations() {
       console.log('Migration: Creating index on article_url');
       db.run(`CREATE INDEX IF NOT EXISTS idx_corrections_url ON corrections(article_url)`);
       saveDatabase();
+
+      // Migration 8: Add schema_version column if it doesn't exist
+      if (!columns.includes('schema_version')) {
+        console.log('Migration: Adding schema_version column to corrections table');
+        db.run("ALTER TABLE corrections ADD COLUMN schema_version TEXT DEFAULT 'v1'");
+        saveDatabase();
+      }
+
+      // Migration 9: Add merged_changes column if it doesn't exist
+      if (!columns.includes('merged_changes')) {
+        console.log('Migration: Adding merged_changes column to corrections table');
+        db.run('ALTER TABLE corrections ADD COLUMN merged_changes TEXT');
+        saveDatabase();
+      }
     }
   } catch (e) {
     console.error('Migration error:', e);
@@ -196,23 +212,30 @@ function saveDatabase() {
 
 // Database functions
 function saveCorrection(data) {
-  // Parse body if it's a string
+  // Parse body if it's a JSON string (array format)
   let originalArticle = data.original_article || {};
   let correctedArticle = data.corrected_article || {};
 
+  // Only try to parse body as JSON if it looks like a JSON array
   if (originalArticle.body && typeof originalArticle.body === 'string') {
-    try {
-      originalArticle.body = JSON.parse(originalArticle.body);
-    } catch (e) {
-      console.warn('Failed to parse original_article.body as JSON:', e);
+    const trimmed = originalArticle.body.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        originalArticle.body = JSON.parse(originalArticle.body);
+      } catch (e) {
+        // Not valid JSON, keep as string (e.g., v2 schema)
+      }
     }
   }
 
   if (correctedArticle.body && typeof correctedArticle.body === 'string') {
-    try {
-      correctedArticle.body = JSON.parse(correctedArticle.body);
-    } catch (e) {
-      console.warn('Failed to parse corrected_article.body as JSON:', e);
+    const trimmed = correctedArticle.body.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        correctedArticle.body = JSON.parse(correctedArticle.body);
+      } catch (e) {
+        // Not valid JSON, keep as string (e.g., v2 schema)
+      }
     }
   }
 
@@ -258,8 +281,8 @@ function saveCorrection(data) {
 
     // Insert correction with article_url and run_number
     db.run(
-      `INSERT INTO corrections (article_id, article_url, run_number, original_article, corrected_article, applied, unapplied)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO corrections (article_id, article_url, run_number, original_article, corrected_article, applied, unapplied, schema_version, merged_changes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Array.isArray(data.article_id) ? data.article_id[0] : (data.article_id || null),
         articleUrl,
@@ -267,20 +290,24 @@ function saveCorrection(data) {
         JSON.stringify(originalArticle),
         JSON.stringify(correctedArticle),
         JSON.stringify(Array.isArray(data.applied) ? data.applied : []),
-        JSON.stringify(Array.isArray(data.unapplied) ? data.unapplied : [])
+        JSON.stringify(Array.isArray(data.unapplied) ? data.unapplied : []),
+        data.schema_version || 'v1',
+        data.merged_changes ? JSON.stringify(data.merged_changes) : null
       ]
     );
   } else {
     // Fallback: insert without article_url (backward compatibility)
     db.run(
-      `INSERT INTO corrections (article_id, original_article, corrected_article, applied, unapplied)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO corrections (article_id, original_article, corrected_article, applied, unapplied, schema_version, merged_changes)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         Array.isArray(data.article_id) ? data.article_id[0] : (data.article_id || null),
         JSON.stringify(originalArticle),
         JSON.stringify(correctedArticle),
         JSON.stringify(Array.isArray(data.applied) ? data.applied : []),
-        JSON.stringify(Array.isArray(data.unapplied) ? data.unapplied : [])
+        JSON.stringify(Array.isArray(data.unapplied) ? data.unapplied : []),
+        data.schema_version || 'v1',
+        data.merged_changes ? JSON.stringify(data.merged_changes) : null
       ]
     );
   }
@@ -355,7 +382,10 @@ function getCorrection(id) {
   const row = result[0].values[0];
   const columns = result[0].columns;
 
-  return {
+  const schemaVersionIdx = columns.indexOf('schema_version');
+  const mergedChangesIdx = columns.indexOf('merged_changes');
+
+  const correction = {
     id: row[columns.indexOf('id')],
     article_id: row[columns.indexOf('article_id')],
     original_article: JSON.parse(row[columns.indexOf('original_article')]),
@@ -364,6 +394,22 @@ function getCorrection(id) {
     unapplied: JSON.parse(row[columns.indexOf('unapplied')]),
     created_at: row[columns.indexOf('created_at')] + 'Z' // Mark as UTC
   };
+
+  // Add schema_version if column exists
+  if (schemaVersionIdx !== -1) {
+    correction.schema_version = row[schemaVersionIdx] || 'v1';
+  }
+
+  // Add merged_changes if column exists and has data
+  if (mergedChangesIdx !== -1 && row[mergedChangesIdx]) {
+    try {
+      correction.merged_changes = JSON.parse(row[mergedChangesIdx]);
+    } catch (e) {
+      console.warn('Failed to parse merged_changes:', e);
+    }
+  }
+
+  return correction;
 }
 
 function removeCorrection(id) {
@@ -517,7 +563,7 @@ function getRunById(runId) {
   const runResult = db.exec(`
     SELECT
       id, run_number, article_url, original_article, corrected_article,
-      applied, unapplied, created_at
+      applied, unapplied, schema_version, merged_changes, created_at
     FROM corrections
     WHERE id = ?
   `, [runId]);
@@ -535,8 +581,18 @@ function getRunById(runId) {
     corrected_article: JSON.parse(row[4]),
     applied: JSON.parse(row[5]),
     unapplied: JSON.parse(row[6]),
-    created_at: row[7] + 'Z'
+    schema_version: row[7] || 'v1',
+    created_at: row[9] + 'Z'
   };
+
+  // Add merged_changes if it exists
+  if (row[8]) {
+    try {
+      run.merged_changes = JSON.parse(row[8]);
+    } catch (e) {
+      console.warn('Failed to parse merged_changes:', e);
+    }
+  }
 
   // Calculate metrics if gold standard exists for this article
   const article = getArticleByUrl(run.article_url);

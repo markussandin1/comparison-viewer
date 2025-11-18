@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const db = require('./database');
+const schemaHandler = require('./schemaHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -33,32 +34,19 @@ app.post('/api/corrections', (req, res) => {
   }
 
   try {
-    const data = req.body;
+    const rawData = req.body;
 
-    // Validate required fields
-    if (!data.corrected_article) {
+    // Process incoming data with schema detection
+    const result = schemaHandler.processIncomingData(rawData);
+
+    if (!result.success) {
       return res.status(400).json({
-        error: 'Missing required field: corrected_article'
-      });
-    }
-
-    // Validate that we have meaningful content
-    const hasContent =
-      (data.corrected_article.body &&
-       ((Array.isArray(data.corrected_article.body) && data.corrected_article.body.length > 0) ||
-        (typeof data.corrected_article.body === 'string' && data.corrected_article.body.trim().length > 0))) ||
-      (data.original_article?.body &&
-       typeof data.original_article.body === 'string' &&
-       data.original_article.body.trim().length > 0);
-
-    if (!hasContent) {
-      return res.status(400).json({
-        error: 'Correction must have content in body field'
+        error: result.error
       });
     }
 
     // Save to database
-    const id = db.saveCorrection(data);
+    const id = db.saveCorrection(result.data);
 
     // Get frontend URL from environment or use default
     const frontendUrl = process.env.FRONTEND_URL || 'https://correction-viewer-frontend-qpfdynkt7a-lz.a.run.app';
@@ -68,7 +56,8 @@ app.post('/api/corrections', (req, res) => {
       success: true,
       id,
       url: correctionUrl,
-      message: 'Correction saved successfully'
+      schema: result.schema,
+      message: `Correction saved successfully (schema: ${result.schema})`
     });
   } catch (error) {
     console.error('Error saving correction:', error);
@@ -121,6 +110,48 @@ app.get('/api/corrections/:id', (req, res) => {
     console.error('Error fetching correction:', error);
     res.status(500).json({
       error: 'Failed to fetch correction',
+      details: error.message
+    });
+  }
+});
+
+// GET corrected text for a correction (for export to CMS)
+app.get('/api/corrections/:id/corrected-text', (req, res) => {
+  if (!serverReady) {
+    return res.status(503).json({ error: 'Server is initializing' });
+  }
+
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID' });
+    }
+
+    const correction = db.getCorrection(id);
+
+    if (!correction) {
+      return res.status(404).json({ error: 'Correction not found' });
+    }
+
+    // Return just the corrected text for easy consumption by CMS
+    const correctedText = typeof correction.corrected_article.body === 'string'
+      ? correction.corrected_article.body
+      : (Array.isArray(correction.corrected_article.body)
+        ? correction.corrected_article.body.join('\n\n')
+        : '');
+
+    res.json({
+      id: correction.id,
+      schema_version: correction.schema_version || 'v1',
+      corrected_text: correctedText,
+      title: correction.corrected_article.title || correction.original_article?.title,
+      changes_count: correction.merged_changes?.length || correction.applied?.length || 0
+    });
+  } catch (error) {
+    console.error('Error fetching corrected text:', error);
+    res.status(500).json({
+      error: 'Failed to fetch corrected text',
       details: error.message
     });
   }

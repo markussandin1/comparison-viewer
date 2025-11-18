@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import MergedChangesViewer from './MergedChangesViewer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -309,6 +310,9 @@ export default function CorrectionViewer() {
   const correctedBody = combineLeadAndBody(correctedArticle);
   const goldBody = goldStandard ? combineLeadAndBody(goldStandard) : '';
 
+  // Detect schema version
+  const isV2Schema = correction.schema_version === 'v2' && correction.merged_changes;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -329,57 +333,68 @@ export default function CorrectionViewer() {
             </div>
           )}
 
-          {/* Version Selection */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-            <div className="text-sm font-medium text-gray-700 mb-3">
-              Välj versioner att jämföra:
+          {/* Schema version badge */}
+          {isV2Schema && (
+            <div className="mb-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                ✨ V2 Schema - Merged Changes
+              </span>
             </div>
-            <div className="flex items-center gap-6 flex-wrap">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showOriginal}
-                  onChange={(e) => setShowOriginal(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Original</span>
-              </label>
+          )}
 
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showCorrected}
-                  onChange={(e) => setShowCorrected(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Korrigerad</span>
-              </label>
-
-              {goldStandard && (
+          {/* Version Selection - only show for v1 schema */}
+          {!isV2Schema && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <div className="text-sm font-medium text-gray-700 mb-3">
+                Välj versioner att jämföra:
+              </div>
+              <div className="flex items-center gap-6 flex-wrap">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={showGold}
-                    onChange={(e) => setShowGold(e.target.checked)}
-                    className="w-4 h-4 text-yellow-600 rounded focus:ring-2 focus:ring-yellow-500"
+                    checked={showOriginal}
+                    onChange={(e) => setShowOriginal(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">
-                    ⭐ Gold Standard
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">Original</span>
                 </label>
-              )}
 
-              <div className="ml-auto text-xs text-gray-500">
-                {selectedVersions.length === 2
-                  ? 'Visar diff mellan valda versioner'
-                  : selectedVersions.length === 1
-                  ? 'Välj en till för diff'
-                  : selectedVersions.length === 0
-                  ? 'Välj minst en version'
-                  : 'Visar text (välj exakt 2 för diff)'}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showCorrected}
+                    onChange={(e) => setShowCorrected(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Korrigerad</span>
+                </label>
+
+                {goldStandard && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showGold}
+                      onChange={(e) => setShowGold(e.target.checked)}
+                      className="w-4 h-4 text-yellow-600 rounded focus:ring-2 focus:ring-yellow-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      ⭐ Gold Standard
+                    </span>
+                  </label>
+                )}
+
+                <div className="ml-auto text-xs text-gray-500">
+                  {selectedVersions.length === 2
+                    ? 'Visar diff mellan valda versioner'
+                    : selectedVersions.length === 1
+                    ? 'Välj en till för diff'
+                    : selectedVersions.length === 0
+                    ? 'Välj minst en version'
+                    : 'Visar text (välj exakt 2 för diff)'}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Metrics Display */}
           {metrics && showGold && (
@@ -411,46 +426,52 @@ export default function CorrectionViewer() {
           )}
 
           {/* Content Comparison */}
-          {selectedVersions.length > 0 ? (
-            <div className="space-y-6">
-              <FieldComparison
-                label="Titel"
-                versions={{
-                  original: originalArticle.title,
-                  corrected: correctedArticle.title,
-                  gold: goldStandard?.title
-                }}
-                selectedVersions={selectedVersions}
-              />
-
-              <FieldComparison
-                label="Lead"
-                versions={{
-                  original: originalArticle.lead,
-                  corrected: correctedArticle.lead,
-                  gold: goldStandard?.lead
-                }}
-                selectedVersions={selectedVersions}
-              />
-
-              <FieldComparison
-                label="Body"
-                versions={{
-                  original: originalBody,
-                  corrected: correctedBody,
-                  gold: goldBody
-                }}
-                selectedVersions={selectedVersions}
-              />
-            </div>
+          {isV2Schema ? (
+            // V2 Schema: Show MergedChangesViewer
+            <MergedChangesViewer correction={correction} />
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              Välj minst en version att visa
-            </div>
+            // V1 Schema: Show traditional field comparison
+            selectedVersions.length > 0 ? (
+              <div className="space-y-6">
+                <FieldComparison
+                  label="Titel"
+                  versions={{
+                    original: originalArticle.title,
+                    corrected: correctedArticle.title,
+                    gold: goldStandard?.title
+                  }}
+                  selectedVersions={selectedVersions}
+                />
+
+                <FieldComparison
+                  label="Lead"
+                  versions={{
+                    original: originalArticle.lead,
+                    corrected: correctedArticle.lead,
+                    gold: goldStandard?.lead
+                  }}
+                  selectedVersions={selectedVersions}
+                />
+
+                <FieldComparison
+                  label="Body"
+                  versions={{
+                    original: originalBody,
+                    corrected: correctedBody,
+                    gold: goldBody
+                  }}
+                  selectedVersions={selectedVersions}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                Välj minst en version att visa
+              </div>
+            )
           )}
 
-          {/* Applied/Unapplied Changes */}
-          {correction.applied && correction.applied.length > 0 && (
+          {/* Applied/Unapplied Changes - only show for v1 schema */}
+          {!isV2Schema && correction.applied && correction.applied.length > 0 && (
             <div className="mt-8 pt-6 border-t border-gray-200">
               <h3 className="font-semibold text-gray-800 mb-3">
                 Tillämpade ändringar ({correction.applied.length})
@@ -496,7 +517,7 @@ export default function CorrectionViewer() {
             </div>
           )}
 
-          {correction.unapplied && correction.unapplied.length > 0 && (
+          {!isV2Schema && correction.unapplied && correction.unapplied.length > 0 && (
             <div className="mt-6">
               <h3 className="font-semibold text-gray-800 mb-3">
                 Ej tillämpade ändringar ({correction.unapplied.length})
