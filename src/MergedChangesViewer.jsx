@@ -2,84 +2,8 @@ import React, { useState, useMemo } from 'react';
 
 /**
  * MergedChangesViewer - Component for displaying v2 schema corrections
- * Shows individual changes with metadata and highlights exact character positions
+ * Shows original and corrected text directly from JSON data
  */
-
-// Helper function to apply highlights to text based on character positions
-function highlightText(text, changes) {
-  if (!text || !changes || changes.length === 0) {
-    return <span>{text}</span>;
-  }
-
-  // Sort changes by position
-  const sortedChanges = [...changes].sort((a, b) => a.char_start - b.char_start);
-
-  const segments = [];
-  let lastIndex = 0;
-
-  sortedChanges.forEach((change, idx) => {
-    const { char_start, char_end, status, severity } = change;
-
-    // Add text before this change
-    if (char_start > lastIndex) {
-      segments.push({
-        type: 'normal',
-        text: text.substring(lastIndex, char_start),
-        key: `normal-${idx}`
-      });
-    }
-
-    // Add highlighted change
-    segments.push({
-      type: 'change',
-      text: text.substring(char_start, char_end),
-      status,
-      severity,
-      change,
-      key: `change-${idx}`
-    });
-
-    lastIndex = char_end;
-  });
-
-  // Add remaining text
-  if (lastIndex < text.length) {
-    segments.push({
-      type: 'normal',
-      text: text.substring(lastIndex),
-      key: `normal-end`
-    });
-  }
-
-  return (
-    <span>
-      {segments.map(segment => {
-        if (segment.type === 'normal') {
-          return <span key={segment.key}>{segment.text}</span>;
-        }
-
-        // Highlight changed text
-        const bgColor = segment.severity === 'major'
-          ? 'bg-red-100 border-b-2 border-red-400'
-          : 'bg-yellow-100 border-b-2 border-yellow-400';
-
-        const statusBadge = segment.status === 'multi_agent_agreement'
-          ? 'font-semibold'
-          : '';
-
-        return (
-          <span
-            key={segment.key}
-            className={`${bgColor} ${statusBadge} px-0.5 rounded cursor-help`}
-            title={`${segment.change.original_text} → ${segment.change.suggested_text}`}
-          >
-            {segment.text}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
 
 // Component to display a single change
 function ChangeItem({ change, index }) {
@@ -213,11 +137,10 @@ function ChangeItem({ change, index }) {
 
 // Main component
 export default function MergedChangesViewer({ correction }) {
-  const { merged_changes, original_article } = correction;
+  const { merged_changes, original_article, corrected_article } = correction;
 
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSeverity, setFilterSeverity] = useState('all');
-  const [showHighlights, setShowHighlights] = useState(true);
 
   // Get statistics
   const stats = useMemo(() => {
@@ -261,39 +184,27 @@ export default function MergedChangesViewer({ correction }) {
     );
   }
 
-  const originalText = typeof original_article === 'string'
-    ? original_article
-    : (original_article?.body || '');
+  // Helper to get text from article object
+  const getArticleText = (article) => {
+    if (!article) return '';
+    if (typeof article === 'string') return article;
 
-  // Generate corrected text by applying changes
-  const correctedText = useMemo(() => {
-    if (!merged_changes || merged_changes.length === 0) {
-      return originalText;
+    // Combine title, lead, and body if present
+    const parts = [];
+    if (article.title) parts.push(article.title);
+    if (article.lead) parts.push(article.lead);
+    if (article.body) {
+      const bodyText = Array.isArray(article.body)
+        ? article.body.join('\n\n')
+        : article.body;
+      parts.push(bodyText);
     }
+    return parts.join('\n\n');
+  };
 
-    // Sort changes by position (descending) to apply from end to start
-    const sortedChanges = [...merged_changes].sort((a, b) => b.char_start - a.char_start);
-
-    let result = originalText;
-
-    for (const change of sortedChanges) {
-      if (change.operation === 'replace') {
-        const before = result.substring(0, change.char_start);
-        const after = result.substring(change.char_end);
-        result = before + change.suggested_text + after;
-      } else if (change.operation === 'insert') {
-        const before = result.substring(0, change.char_start);
-        const after = result.substring(change.char_start);
-        result = before + change.suggested_text + after;
-      } else if (change.operation === 'delete') {
-        const before = result.substring(0, change.char_start);
-        const after = result.substring(change.char_end);
-        result = before + after;
-      }
-    }
-
-    return result;
-  }, [originalText, merged_changes]);
+  // Use data directly from JSON - no transformations
+  const originalText = getArticleText(original_article);
+  const correctedText = getArticleText(corrected_article);
 
   return (
     <div className="space-y-6">
@@ -363,18 +274,6 @@ export default function MergedChangesViewer({ correction }) {
               <option value="minor">Minor</option>
             </select>
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="showHighlights"
-              checked={showHighlights}
-              onChange={(e) => setShowHighlights(e.target.checked)}
-              className="mr-2"
-            />
-            <label htmlFor="showHighlights" className="text-sm font-medium text-gray-700">
-              Visa highlights i text
-            </label>
-          </div>
         </div>
       </div>
 
@@ -389,7 +288,7 @@ export default function MergedChangesViewer({ correction }) {
             </div>
             <div className="p-4 bg-white max-h-96 overflow-y-auto">
               <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-                {showHighlights ? highlightText(originalText, filteredChanges) : originalText}
+                {originalText}
               </div>
             </div>
           </div>
@@ -406,25 +305,6 @@ export default function MergedChangesViewer({ correction }) {
             </div>
           </div>
         </div>
-
-        {showHighlights && (
-          <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500">
-            <div className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-red-100 border-b-2 border-red-400 rounded"></span>
-                <span>Major severity (i original)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 bg-yellow-100 border-b-2 border-yellow-400 rounded"></span>
-                <span>Minor severity (i original)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">Fetstil</span>
-                <span>= Flera agenter eniga</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Changes list */}
